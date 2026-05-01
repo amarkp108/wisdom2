@@ -1,13 +1,8 @@
 export type SheetRegistrationData = {
-  name: string;
-  course: string;
   regNo: string;
-  stream: string;
+  course: string;
   section: string;
   clubs: string;
-  clubDomains: string;
-  timestamp: string;
-  url: string;
 };
 
 const SHEET_WEBHOOK_URL = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK_URL || "";
@@ -20,14 +15,15 @@ export async function submitRegistrationToGoogleSheet(data: SheetRegistrationDat
   await fetch(SHEET_WEBHOOK_URL, {
     method: "POST",
     mode: "no-cors",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
     body: new URLSearchParams({
-      name: data.name,
-      course: data.course,
       regNo: data.regNo,
-      stream: data.stream,
+      course: data.course,
       section: data.section,
       clubs: data.clubs,
-    }),
+    }).toString(),
   });
 
   return { success: true };

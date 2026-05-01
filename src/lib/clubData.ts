@@ -11,79 +11,31 @@ export interface Domain {
 export const domains: Domain[] = [
   {
     id: 1,
-    name: "Fine Arts",
+    name: "Economics",
     clubs: [
-      { name: "3-D Texture Art" },
-      { name: "Handmade Jewellery" },
-      { name: "Anime Portrait" },
-      { name: "Miniature Painting" },
-      { name: "Shoe and Lantern Painting" },
-      { name: "Design Thinking and Innovation" },
-      { name: "Creative Painting" },
+      { name: "Impact of Government Campaigns on Country's PPC" },
+      { name: "Solution of Central Problems for India" },
+      { name: "Some Recent Economic Problems faced by India" },
     ],
   },
   {
     id: 2,
-    name: "Dance",
+    name: "Business Studies",
     clubs: [
-      { name: "Classical Dance" },
-      { name: "Contemporary: Hip Hop Dance" },
-      { name: "Free Style & Folk Dance" },
-      { name: "Punjabi Folk: Giddha – (Only for girls) " },
+      { name: "Primary Industries in India" },
+      { name: "Secondary Industries in India" },
+      { name: "Economics Activities" },
     ],
   },
   {
     id: 3,
-    name: "Music",
+    name: "Accountancy",
     clubs: [
-      { name: "Instrumental: Rhythm; Percussion" },
-      { name: "Keyboard and Vocal" },
-    ],
-  },
-  {
-    id: 4,
-    name: "Dramatics",
-    clubs: [{ name: "Theatre" }],
-  },
-  {
-    id: 5,
-    name: "Sports",
-    clubs: [
-      { name: "Chess" },
-      { name: "Carrom" },
-      { name: "Table Tennis (Basic proficiency needed) " },
-    ],
-  },
-  {
-    id: 6,
-    name: "Skill Development",
-    clubs: [
-      { name: "Augmented Reality and Internet of things" },
-      { name: "Food & Baking" },
-      { name: "Health & Wellness" },
-      { name: "Marketing & Sales" },
-    ],
-  },
-  {
-    id: 7,
-    name: "Literary",
-    clubs: [
-      { name: "Literary Club" },
-      { name: "Comic Strip" },
-      { name: "Namaste Germany! (Only for German language students)" },
-      { name: "Namaste Japan! (Only for Japanese language students)" },
-      { name: "Namaste France! (Open to all students)" },
-      { name: "Mass Media" },
-    ],
-  },
-  {
-    id: 8,
-    name: "Academic",
-    clubs: [
-      { name: "Rube Goldberg" },
-      { name: "Aptitude & Reasoning club" },
-      { name: "Maths Manthan" },
-      { name: "Youth Parliament" },
+      { name: "Accounting Terms: Assets, Liabilities, Capital, Drawing, Entity" },
+      {
+        name: "Accounting Terms: Revenue, Expenses, Capital Expenditure, Revenue Expenditure, Business Transactions",
+      },
+      { name: "Rules of Debit and Credit as per Modern and Traditional Approach" },
     ],
   },
 ];
