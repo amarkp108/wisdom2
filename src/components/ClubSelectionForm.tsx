@@ -20,9 +20,7 @@ import schoolLogo from "@/assets/school-logo.jpeg";
 // ── Student lookup helper ──────────────────────────────────────────────────────
 function lookupStudent(regNo: string) {
   const trimmed = regNo.trim();
-  return studentData.find(
-    (s) => s.regNo.toLowerCase() === trimmed.toLowerCase()
-  ) ?? null;
+  return studentData.find((s) => s.regNo.toLowerCase() === trimmed.toLowerCase()) ?? null;
 }
 
 // ── Per-student row state ──────────────────────────────────────────────────────
@@ -50,7 +48,6 @@ export function ClubSelectionForm() {
     emptyRow(),
     emptyRow(),
     emptyRow(),
-
   ]);
 
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -84,15 +81,16 @@ export function ClubSelectionForm() {
       const isDuplicate =
         trimmed !== "" &&
         prev.some(
-          (s, i) => i !== index && s.scholarId.trim().toLowerCase() === trimmed.toLowerCase()
+          (s, i) => i !== index && s.scholarId.trim().toLowerCase() === trimmed.toLowerCase(),
         );
 
       const student = !isDuplicate ? lookupStudent(value) : null;
 
       // Find the section already set by another valid row
-      const otherValidSection = prev
-        .filter((s, i) => i !== index && s.found === true && s.section)
-        .map((s) => s.section)[0] ?? null;
+      const otherValidSection =
+        prev
+          .filter((s, i) => i !== index && s.found === true && s.section)
+          .map((s) => s.section)[0] ?? null;
 
       const isSectionMismatch =
         student !== null &&
@@ -107,12 +105,12 @@ export function ClubSelectionForm() {
           trimmed === ""
             ? null
             : isDuplicate
-            ? "duplicate"
-            : student === null
-            ? false
-            : isSectionMismatch
-            ? "section_mismatch"
-            : true,
+              ? "duplicate"
+              : student === null
+                ? false
+                : isSectionMismatch
+                  ? "section_mismatch"
+                  : true,
       };
       return next;
     });
@@ -157,30 +155,30 @@ export function ClubSelectionForm() {
     setConfirmationDialogState("confirm");
   };
 
- const handleConfirmSubmit = async () => {
-  setConfirmationDialogState(null);
-  setSubmitError(null);
-  setSubmitting(true);
-  const selectedClubNames = selectedClubs.map((club) => club.name).join(", ");
+  const handleConfirmSubmit = async () => {
+    setConfirmationDialogState(null);
+    setSubmitError(null);
+    setSubmitting(true);
+    const selectedClubNames = selectedClubs.map((club) => club.name).join(", ");
 
-  try {
-    for (const student of students) {
-      if (!student.scholarId.trim()) continue;
-      await submitRegistrationToGoogleSheet({
-        regNo: student.scholarId,
-        course: student.course,
-        section: student.section,
-        clubs: selectedClubNames,
-      });
+    try {
+      for (const student of students) {
+        if (!student.scholarId.trim()) continue;
+        await submitRegistrationToGoogleSheet({
+          regNo: student.scholarId,
+          course: student.course,
+          section: student.section,
+          clubs: selectedClubNames,
+        });
+      }
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError("Submission failed. Please try again.");
+      setConfirmationDialogState("confirm");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitted(true);
-  } catch (err) {
-    setSubmitError("Submission failed. Please try again.");
-    setConfirmationDialogState("confirm");
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
   const handleReset = () => {
     setSelectedDomain(null);
@@ -192,9 +190,8 @@ export function ClubSelectionForm() {
   };
 
   const selectedCountForDomain = (domain: Domain) =>
-    selectedClubs.filter((club) =>
-      domain.clubs.some((domainClub) => domainClub.name === club.name)
-    ).length;
+    selectedClubs.filter((club) => domain.clubs.some((domainClub) => domainClub.name === club.name))
+      .length;
 
   const moveClub = (index: number, direction: -1 | 1) => {
     setSelectedClubs((prev) => {
@@ -231,21 +228,22 @@ export function ClubSelectionForm() {
             <h2 className="text-2xl font-bold text-[#1b3a2d]">Registration Successful!</h2>
             <p className="mt-2 text-[#6b7280]">Your Topic preference has been recorded.</p>
             <div className="mt-3 flex flex-col gap-1">
-              {students.filter((s) => s.scholarId.trim()).map((s, i) => (
-                <p key={i} className="text-sm text-[#6b7280]">
-                  Scholar ID:{" "}
-                  <span className="font-semibold text-[#1b3a2d]">{s.scholarId}</span>
-                  {s.course && (
-                    <span className="ml-2 text-[#9ca3af]">
-                      · {s.course} · {s.section}
-                    </span>
-                  )}
-                </p>
-              ))}
+              {students
+                .filter((s) => s.scholarId.trim())
+                .map((s, i) => (
+                  <p key={i} className="text-sm text-[#6b7280]">
+                    Scholar ID: <span className="font-semibold text-[#1b3a2d]">{s.scholarId}</span>
+                    {s.course && (
+                      <span className="ml-2 text-[#9ca3af]">
+                        · {s.course} · {s.section}
+                      </span>
+                    )}
+                  </p>
+                ))}
             </div>
             <div className="mt-6 rounded-xl bg-[#f8faf9] p-6 text-left text-sm max-w-md mx-auto">
               <div className="mb-4 flex items-center justify-between rounded-lg bg-[#eff1f3] px-4 py-3 text-sm font-semibold text-[#1b3a2d]">
-                <span>Selected club</span>
+                <span>Selected topic</span>
                 <span className="text-[#6b7280]">
                   {totalSelected}/{maxSelections}
                 </span>
@@ -253,7 +251,7 @@ export function ClubSelectionForm() {
               <div className="overflow-hidden rounded-xl border border-[#e5e7eb] text-sm">
                 <div className="grid grid-cols-2 gap-4 bg-[#f3f4f6] px-4 py-3 text-xs uppercase tracking-[0.12em] text-[#6b7280]">
                   <span>Domain</span>
-                  <span>Club</span>
+                  <span>Topic</span>
                 </div>
                 <div className="divide-y divide-[#e5e7eb] bg-white">
                   {selectedClubsPreview.map((item, index) => (
@@ -291,7 +289,6 @@ export function ClubSelectionForm() {
     <div className="min-h-screen bg-[#f0f2f5]">
       <Header />
       <div className="mx-auto max-w-4xl px-4 py-8 -mt-8 relative z-10 space-y-6">
-
         {/* ── Student Details (3 rows) ── */}
         <div className="rounded-2xl bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
@@ -300,7 +297,9 @@ export function ClubSelectionForm() {
             </div>
             <div>
               <h3 className="font-bold text-[#1b3a2d]">Student Details</h3>
-              <p className="text-xs text-[#6b7280]">Enter Scholar ID — Course & Section will fill automatically</p>
+              <p className="text-xs text-[#6b7280]">
+                Enter Scholar ID — Course & Section will fill automatically
+              </p>
             </div>
           </div>
 
@@ -336,10 +335,10 @@ export function ClubSelectionForm() {
                       student.found === true
                         ? "border-emerald-400 bg-emerald-50"
                         : student.found === false
-                        ? "border-rose-300 bg-rose-50"
-                        : student.found === "duplicate"
-                        ? "border-orange-400 bg-orange-50"
-                        : "border-[#e5e7eb] focus:border-[#1b3a2d]"
+                          ? "border-rose-300 bg-rose-50"
+                          : student.found === "duplicate"
+                            ? "border-orange-400 bg-orange-50"
+                            : "border-[#e5e7eb] focus:border-[#1b3a2d]",
                     )}
                   />
                   {student.found === true && (
@@ -403,8 +402,8 @@ export function ClubSelectionForm() {
               <BookOpen className="h-5 w-5 text-[#1b3a2d]" />
             </div>
             <div>
-              <h3 className="font-bold text-[#1b3a2d]">Choose Domain</h3>
-              <p className="text-xs text-[#6b7280]">Select one club of your choice</p>
+              <h3 className="font-bold text-[#1b3a2d]">Choose Topic</h3>
+              <p className="text-xs text-[#6b7280]">Select one topic of your choice</p>
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -470,7 +469,7 @@ export function ClubSelectionForm() {
                       )
                     ) : (
                       <>
-                        Select a club from{" "}
+                        Select a topic from{" "}
                         <Badge className="bg-[#1b3a2d]/10 text-[#1b3a2d] hover:bg-[#1b3a2d]/10 text-xs">
                           {selectedDomain.name}
                         </Badge>
@@ -628,10 +627,10 @@ export function ClubSelectionForm() {
                       : hasSectionMismatch
                         ? "Section should be same. Please make sure all students belong to the same section before submitting."
                         : hasDuplicate
-                        ? "Duplicate Scholar IDs found. Please enter unique IDs for each student."
-                        : !hasAtLeastOneStudent
-                        ? "Please enter at least one Scholar ID before submitting."
-                        : `Please select a club before submitting.`}
+                          ? "Duplicate Scholar IDs found. Please enter unique IDs for each student."
+                          : !hasAtLeastOneStudent
+                            ? "Please enter at least one Scholar ID before submitting."
+                            : `Please select a club before submitting.`}
                   </DialogDescription>
                   {submitError && (
                     <div className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
@@ -701,8 +700,7 @@ function Header() {
           className="h-16 w-16 rounded-full object-cover"
         />
         <div>
-          <h1 className="text-3xl font-bold text-white">Club Wisdom Registration</h1>
-          <p className="text-lg text-white">Wisdom World School - Kurukshetra</p>
+          <h1 className="text-3xl font-bold text-white">Wisdom World School - Kurukshetra</h1>
         </div>
         <p className="text-xs text-white">Developed by Okie Dokie</p>
       </div>
