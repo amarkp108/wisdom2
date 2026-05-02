@@ -49,6 +49,8 @@ export function ClubSelectionForm() {
     emptyRow(),
     emptyRow(),
     emptyRow(),
+    emptyRow(),
+
   ]);
 
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -74,7 +76,7 @@ export function ClubSelectionForm() {
   const hasSectionMismatch = students.some((s) => s.found === "section_mismatch");
 
   // Scholar ID change + auto-fill + duplicate + section mismatch check
-  const handleScholarIdChange = (index: 0 | 1 | 2, value: string) => {
+  const handleScholarIdChange = (index: 0 | 1 | 2 | 3, value: string) => {
     setStudents((prev) => {
       const next = [...prev] as [StudentRow, StudentRow, StudentRow];
       const trimmed = value.trim();
@@ -183,7 +185,7 @@ export function ClubSelectionForm() {
   const handleReset = () => {
     setSelectedDomain(null);
     setSelectedClubs([]);
-    setStudents([emptyRow(), emptyRow(), emptyRow()]);
+    setStudents([emptyRow(), emptyRow(), emptyRow(), emptyRow()]);
     setPreviewOpen(false);
     setMaxDialogOpen(false);
     setSubmitted(false);
@@ -227,7 +229,7 @@ export function ClubSelectionForm() {
               <CheckCircle2 className="h-10 w-10 text-emerald-600" />
             </div>
             <h2 className="text-2xl font-bold text-[#1b3a2d]">Registration Successful!</h2>
-            <p className="mt-2 text-[#6b7280]">Your club preference has been recorded.</p>
+            <p className="mt-2 text-[#6b7280]">Your Topic preference has been recorded.</p>
             <div className="mt-3 flex flex-col gap-1">
               {students.filter((s) => s.scholarId.trim()).map((s, i) => (
                 <p key={i} className="text-sm text-[#6b7280]">
@@ -438,7 +440,7 @@ export function ClubSelectionForm() {
                       selectedDomain?.id === domain.id ? "text-white/70" : "text-[#9ca3af]",
                     )}
                   >
-                    {domain.clubs.length} clubs
+                    {domain.clubs.length} Topics
                   </span>
                 </button>
               );
@@ -455,7 +457,7 @@ export function ClubSelectionForm() {
                   <School className="h-5 w-5 text-[#1b3a2d]" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-[#1b3a2d]">Choose Club</h3>
+                  <h3 className="font-bold text-[#1b3a2d]">Choose Topic</h3>
                   <p className="text-xs text-[#6b7280]">
                     {singleChoiceDomains.includes(selectedDomain.name) ? (
                       selectedDomain.name === "Music" ? (
@@ -669,7 +671,7 @@ export function ClubSelectionForm() {
                 <DialogHeader>
                   <DialogTitle>Maximum reached</DialogTitle>
                   <DialogDescription>
-                    You have reached the maximum of 1 club selections. Remove one selection to add
+                    You have reached the maximum of 1 Topic selections. Remove one selection to add
                     another.
                   </DialogDescription>
                 </DialogHeader>
@@ -699,7 +701,7 @@ function Header() {
           className="h-16 w-16 rounded-full object-cover"
         />
         <div>
-          <h1 className="text-3xl font-bold text-white">Clubs Wisdom Registration</h1>
+          <h1 className="text-3xl font-bold text-white">Club Wisdom Registration</h1>
           <p className="text-lg text-white">Wisdom World School - Kurukshetra</p>
         </div>
         <p className="text-xs text-white">Developed by Okie Dokie</p>
