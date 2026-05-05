@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { domains, type Domain, type Club } from "@/lib/clubData";
-import { studentData } from "@/lib/studentData"; // ← import kar student data
 import { submitRegistrationToGoogleSheet } from "@/lib/googleSheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,38 +16,27 @@ import { cn } from "@/lib/utils";
 import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, School } from "lucide-react";
 import schoolLogo from "@/assets/school-logo.jpeg";
 
-// ── Student lookup helper ──────────────────────────────────────────────────────
-function lookupStudent(regNo: string) {
-  const trimmed = regNo.trim();
-  return studentData.find((s) => s.regNo.toLowerCase() === trimmed.toLowerCase()) ?? null;
-}
-
-// ── Per-student row state ──────────────────────────────────────────────────────
-interface StudentRow {
-  scholarId: string;
-  course: string;
+// ── Student form state ─────────────────────────────────────────────────────────
+interface StudentInfo {
+  scholarNo: string;
+  studentName: string;
+  fatherName: string;
+  grade: string;
   section: string;
-  found: boolean | null | "duplicate" | "section_mismatch"; // null=empty, true=found, false=not found, duplicate, section_mismatch
 }
 
-const emptyRow = (): StudentRow => ({
-  scholarId: "",
-  course: "",
+const emptyStudent = (): StudentInfo => ({
+  scholarNo: "",
+  studentName: "",
+  fatherName: "",
+  grade: "",
   section: "",
-  found: null,
 });
 
 export function ClubSelectionForm() {
+  const [student, setStudent] = useState<StudentInfo>(emptyStudent());
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
   const [selectedClubs, setSelectedClubs] = useState<Club[]>([]);
-
-  // 3 student rows
-  const [students, setStudents] = useState<[StudentRow, StudentRow, StudentRow]>([
-    emptyRow(),
-    emptyRow(),
-    emptyRow(),
-    emptyRow(),
-  ]);
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [maxDialogOpen, setMaxDialogOpen] = useState(false);
@@ -62,63 +50,23 @@ export function ClubSelectionForm() {
   const maxSelections = 1;
   const totalSelected = selectedClubs.length;
   const isSubmitReady = totalSelected === maxSelections;
-  const singleChoiceDomains = ["Economics", "Business Studies", "Accountancy"];
-  const selectedDomainAllowsMultiple = false; // max 1 club total
+  const selectedDomainAllowsMultiple = false;
   const isMaxReached = totalSelected >= maxSelections;
 
-  // At least one scholar ID must be filled
-  const hasAtLeastOneStudent = students.some((s) => s.scholarId.trim() !== "");
-  // Block submit if any duplicate exists
-  const hasDuplicate = students.some((s) => s.found === "duplicate");
-  const hasSectionMismatch = students.some((s) => s.found === "section_mismatch");
+  // Validation
+  const isStudentFilled =
+    student.scholarNo.trim() !== "" &&
+    student.studentName.trim() !== "" &&
+    student.fatherName.trim() !== "" &&
+    student.grade.trim() !== "" &&
+    student.section.trim() !== "";
 
-  // Scholar ID change + auto-fill + duplicate + section mismatch check
-  const handleScholarIdChange = (index: 0 | 1 | 2 | 3, value: string) => {
-    setStudents((prev) => {
-      const next = [...prev] as [StudentRow, StudentRow, StudentRow];
-      const trimmed = value.trim();
-
-      const isDuplicate =
-        trimmed !== "" &&
-        prev.some(
-          (s, i) => i !== index && s.scholarId.trim().toLowerCase() === trimmed.toLowerCase(),
-        );
-
-      const student = !isDuplicate ? lookupStudent(value) : null;
-
-      // Find the section already set by another valid row
-      const otherValidSection =
-        prev
-          .filter((s, i) => i !== index && s.found === true && s.section)
-          .map((s) => s.section)[0] ?? null;
-
-      const isSectionMismatch =
-        student !== null &&
-        otherValidSection !== null &&
-        student.section.toLowerCase() !== otherValidSection.toLowerCase();
-
-      next[index] = {
-        scholarId: value,
-        course: student ? student.course : "",
-        section: student ? student.section : "",
-        found:
-          trimmed === ""
-            ? null
-            : isDuplicate
-              ? "duplicate"
-              : student === null
-                ? false
-                : isSectionMismatch
-                  ? "section_mismatch"
-                  : true,
-      };
-      return next;
-    });
+  const handleFieldChange = (field: keyof StudentInfo, value: string) => {
+    setStudent((prev) => ({ ...prev, [field]: value }));
   };
 
   const getDomainNameForClub = (club: Club) =>
-    domains.find((domain) => domain.clubs.some((domainClub) => domainClub.name === club.name))
-      ?.name ?? "";
+    domains.find((domain) => domain.clubs.some((dc) => dc.name === club.name))?.name ?? "";
 
   const handleDomainSelect = (domain: Domain) => {
     if (selectedDomain?.id === domain.id) {
@@ -131,18 +79,8 @@ export function ClubSelectionForm() {
   };
 
   const handleSubmit = () => {
-    if (hasSectionMismatch) {
-      setSubmitError("Section should be same for all students.");
-      setConfirmationDialogState("minimum");
-      return;
-    }
-    if (hasDuplicate) {
-      setSubmitError("Duplicate Scholar IDs found. Please enter unique IDs for each student.");
-      setConfirmationDialogState("minimum");
-      return;
-    }
-    if (!hasAtLeastOneStudent) {
-      setSubmitError("Please enter at least one Scholar ID before submitting.");
+    if (!isStudentFilled) {
+      setSubmitError("Please fill in all student details before submitting.");
       setConfirmationDialogState("minimum");
       return;
     }
@@ -162,17 +100,16 @@ export function ClubSelectionForm() {
     const selectedClubNames = selectedClubs.map((club) => club.name).join(", ");
 
     try {
-      for (const student of students) {
-        if (!student.scholarId.trim()) continue;
-        await submitRegistrationToGoogleSheet({
-          regNo: student.scholarId,
-          course: student.course,
-          section: student.section,
-          clubs: selectedClubNames,
-        });
-      }
+      await submitRegistrationToGoogleSheet({
+        scholarNo: student.scholarNo,
+        studentName: student.studentName,
+        fatherName: student.fatherName,
+        grade: student.grade,
+        section: student.section,
+        clubs: selectedClubNames,
+      });
       setSubmitted(true);
-    } catch (err) {
+    } catch {
       setSubmitError("Submission failed. Please try again.");
       setConfirmationDialogState("confirm");
     } finally {
@@ -181,17 +118,18 @@ export function ClubSelectionForm() {
   };
 
   const handleReset = () => {
+    setStudent(emptyStudent());
     setSelectedDomain(null);
     setSelectedClubs([]);
-    setStudents([emptyRow(), emptyRow(), emptyRow(), emptyRow()]);
     setPreviewOpen(false);
     setMaxDialogOpen(false);
     setSubmitted(false);
   };
 
   const selectedCountForDomain = (domain: Domain) =>
-    selectedClubs.filter((club) => domain.clubs.some((domainClub) => domainClub.name === club.name))
-      .length;
+    selectedClubs.filter((club) =>
+      domain.clubs.some((dc) => dc.name === club.name),
+    ).length;
 
   const moveClub = (index: number, direction: -1 | 1) => {
     setSelectedClubs((prev) => {
@@ -215,7 +153,9 @@ export function ClubSelectionForm() {
     };
   });
 
-  // ── Success screen ────────────────────────────────────────────────────────────
+  const singleChoiceDomains = ["Economics", "Business Studies", "Accountancy"];
+
+  // ── Success screen ─────────────────────────────────────────────────────────
   if (submitted) {
     return (
       <div className="min-h-screen bg-[#f0f2f5]">
@@ -227,26 +167,16 @@ export function ClubSelectionForm() {
             </div>
             <h2 className="text-2xl font-bold text-[#1b3a2d]">Registration Successful!</h2>
             <p className="mt-2 text-[#6b7280]">Your Topic preference has been recorded.</p>
-            <div className="mt-3 flex flex-col gap-1">
-              {students
-                .filter((s) => s.scholarId.trim())
-                .map((s, i) => (
-                  <p key={i} className="text-sm text-[#6b7280]">
-                    Scholar ID: <span className="font-semibold text-[#1b3a2d]">{s.scholarId}</span>
-                    {s.course && (
-                      <span className="ml-2 text-[#9ca3af]">
-                        · {s.course} · {s.section}
-                      </span>
-                    )}
-                  </p>
-                ))}
+            <div className="mt-3 flex flex-col gap-1 text-sm text-[#6b7280]">
+              <p>Scholar No: <span className="font-semibold text-[#1b3a2d]">{student.scholarNo}</span></p>
+              <p>Name: <span className="font-semibold text-[#1b3a2d]">{student.studentName}</span></p>
+              <p>Father's Name: <span className="font-semibold text-[#1b3a2d]">{student.fatherName}</span></p>
+              <p>Grade &amp; Section: <span className="font-semibold text-[#1b3a2d]">{student.grade} · {student.section}</span></p>
             </div>
             <div className="mt-6 rounded-xl bg-[#f8faf9] p-6 text-left text-sm max-w-md mx-auto">
               <div className="mb-4 flex items-center justify-between rounded-lg bg-[#eff1f3] px-4 py-3 text-sm font-semibold text-[#1b3a2d]">
                 <span>Selected topic</span>
-                <span className="text-[#6b7280]">
-                  {totalSelected}/{maxSelections}
-                </span>
+                <span className="text-[#6b7280]">{totalSelected}/{maxSelections}</span>
               </div>
               <div className="overflow-hidden rounded-xl border border-[#e5e7eb] text-sm">
                 <div className="grid grid-cols-2 gap-4 bg-[#f3f4f6] px-4 py-3 text-xs uppercase tracking-[0.12em] text-[#6b7280]">
@@ -278,18 +208,25 @@ export function ClubSelectionForm() {
                 </div>
               </div>
             </div>
+            <Button
+              onClick={handleReset}
+              className="mt-6 px-6 h-11 rounded-xl bg-[#1b3a2d] hover:bg-[#153024] text-white"
+            >
+              Register Another
+            </Button>
           </div>
         </div>
       </div>
     );
   }
 
-  // ── Main form ─────────────────────────────────────────────────────────────────
+  // ── Main form ──────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f0f2f5]">
       <Header />
       <div className="mx-auto max-w-4xl px-4 py-8 -mt-8 relative z-10 space-y-6">
-        {/* ── Student Details (3 rows) ── */}
+
+        {/* ── Student Details ── */}
         <div className="rounded-2xl bg-white p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f0f2f5]">
@@ -297,89 +234,85 @@ export function ClubSelectionForm() {
             </div>
             <div>
               <h3 className="font-bold text-[#1b3a2d]">Student Details</h3>
-              <p className="text-xs text-[#6b7280]">
-                Enter Scholar ID — Course & Section will fill automatically
-              </p>
+              <p className="text-xs text-[#6b7280]">Fill in your details below</p>
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-[#e5e7eb] text-sm">
-            {/* Header row */}
-            <div className="grid grid-cols-[auto_minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1.5fr)] gap-3 bg-[#f3f4f6] px-4 py-3 text-xs uppercase tracking-[0.12em] text-[#6b7280]">
-              <span className="w-6">#</span>
-              <span>Scholar ID</span>
-              <span>Course</span>
-              <span>Section</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Scholar No */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
+                Scholar No.
+              </label>
+              <input
+                type="text"
+                id="scholarNo"
+                value={student.scholarNo}
+                onChange={(e) => handleFieldChange("scholarNo", e.target.value)}
+                placeholder="e.g. 1231/2014"
+                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+              />
             </div>
 
-            {/* 3 student rows */}
-            {students.map((student, i) => (
-              <div
-                key={i}
-                className="grid grid-cols-[auto_minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1.5fr)] gap-3 items-center border-t border-[#e5e7eb] px-4 py-3"
-              >
-                {/* Row number */}
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#e2e8f0] text-xs font-semibold text-[#1b3a2d]">
-                  {i + 1}
-                </span>
+            {/* Student Name */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
+                Student Name
+              </label>
+              <input
+                type="text"
+                id="studentName"
+                value={student.studentName}
+                onChange={(e) => handleFieldChange("studentName", e.target.value)}
+                placeholder="e.g. Rahul Sharma"
+                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+              />
+            </div>
 
-                {/* Scholar ID input */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={student.scholarId}
-                    onChange={(e) => handleScholarIdChange(i as 0 | 1 | 2, e.target.value)}
-                    placeholder="e.g. 1231/2014"
-                    className={cn(
-                      "w-full rounded-lg border px-3 py-2 text-sm text-[#1b3a2d] outline-none transition-colors",
-                      student.found === true
-                        ? "border-emerald-400 bg-emerald-50"
-                        : student.found === false
-                          ? "border-rose-300 bg-rose-50"
-                          : student.found === "duplicate"
-                            ? "border-orange-400 bg-orange-50"
-                            : "border-[#e5e7eb] focus:border-[#1b3a2d]",
-                    )}
-                  />
-                  {student.found === true && (
-                    <CheckCircle2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500 pointer-events-none" />
-                  )}
-                  {student.found === false && student.scholarId.trim() && (
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-rose-500 font-medium">
-                      ✕ Not found
-                    </span>
-                  )}
-                  {student.found === "duplicate" && (
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-orange-500 font-medium">
-                      ⚠ Duplicate
-                    </span>
-                  )}
-                  {student.found === "section_mismatch" && (
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-purple-600 font-medium whitespace-nowrap">
-                      ⚠ Section mismatch
-                    </span>
-                  )}
-                </div>
+            {/* Father Name */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
+                Father's Name
+              </label>
+              <input
+                type="text"
+                id="fatherName"
+                value={student.fatherName}
+                onChange={(e) => handleFieldChange("fatherName", e.target.value)}
+                placeholder="e.g. Suresh Sharma"
+                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+              />
+            </div>
 
-                {/* Course (auto-filled, read-only) */}
-                <input
-                  type="text"
-                  value={student.course}
-                  readOnly
-                  placeholder="Auto-fill"
-                  className="w-full rounded-lg border border-[#e5e7eb] bg-[#f8faf9] px-3 py-2 text-sm text-[#1b3a2d] outline-none cursor-not-allowed"
-                />
+            {/* Grade */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
+                Grade
+              </label>
+              <input
+                type="text"
+                id="grade"
+                value={student.grade}
+                onChange={(e) => handleFieldChange("grade", e.target.value)}
+                placeholder="e.g. GRADE-11"
+                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+              />
+            </div>
 
-                {/* Section (auto-filled, read-only) */}
-                <input
-                  type="text"
-                  value={student.section}
-                  readOnly
-                  placeholder="Auto-fill"
-                  className="w-full rounded-lg border border-[#e5e7eb] bg-[#f8faf9] px-3 py-2 text-sm text-[#1b3a2d] outline-none cursor-not-allowed"
-                />
-              </div>
-            ))}
+            {/* Section */}
+            <div className="flex flex-col gap-1 sm:col-span-2">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
+                Section
+              </label>
+              <input
+                type="text"
+                id="section"
+                value={student.section}
+                onChange={(e) => handleFieldChange("section", e.target.value)}
+                placeholder="e.g. KAUTILYA"
+                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+              />
+            </div>
           </div>
         </div>
 
@@ -459,14 +392,7 @@ export function ClubSelectionForm() {
                   <h3 className="font-bold text-[#1b3a2d]">Choose Topic</h3>
                   <p className="text-xs text-[#6b7280]">
                     {singleChoiceDomains.includes(selectedDomain.name) ? (
-                      selectedDomain.name === "Music" ? (
-                        <>
-                          Select any one choice{" "}
-                          <span className="font-bold text-black">(Basic proficiency needed)</span>
-                        </>
-                      ) : (
-                        "Select any one choice"
-                      )
+                      "Select any one choice"
                     ) : (
                       <>
                         Select a topic from{" "}
@@ -486,19 +412,17 @@ export function ClubSelectionForm() {
               </div>
               <div className="grid gap-3">
                 {selectedDomain.clubs.map((club) => {
-                  const isSelected = selectedClubs.some((selected) => selected.name === club.name);
-                  const domainClubNames = selectedDomain.clubs.map((domainClub) => domainClub.name);
-                  const hasSameDomainSelected = selectedClubs.some((selected) =>
-                    domainClubNames.includes(selected.name),
+                  const isSelected = selectedClubs.some((s) => s.name === club.name);
+                  const domainClubNames = selectedDomain.clubs.map((dc) => dc.name);
+                  const hasSameDomainSelected = selectedClubs.some((s) =>
+                    domainClubNames.includes(s.name),
                   );
                   return (
                     <button
                       key={club.name}
                       onClick={() => {
                         if (isSelected) {
-                          setSelectedClubs((prev) =>
-                            prev.filter((selected) => selected.name !== club.name),
-                          );
+                          setSelectedClubs((prev) => prev.filter((s) => s.name !== club.name));
                           return;
                         }
                         if (!selectedDomainAllowsMultiple) {
@@ -507,7 +431,7 @@ export function ClubSelectionForm() {
                             return;
                           }
                           setSelectedClubs((prev) => [
-                            ...prev.filter((selected) => !domainClubNames.includes(selected.name)),
+                            ...prev.filter((s) => !domainClubNames.includes(s.name)),
                             club,
                           ]);
                           return;
@@ -525,12 +449,8 @@ export function ClubSelectionForm() {
                           : "border-[#e5e7eb] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]",
                       )}
                     >
-                      <div>
-                        <span className="font-semibold text-[#1b3a2d] text-sm">{club.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isSelected && <CheckCircle2 className="h-5 w-5 text-[#1b3a2d] shrink-0" />}
-                      </div>
+                      <span className="font-semibold text-[#1b3a2d] text-sm">{club.name}</span>
+                      {isSelected && <CheckCircle2 className="h-5 w-5 text-[#1b3a2d] shrink-0" />}
                     </button>
                   );
                 })}
@@ -568,9 +488,7 @@ export function ClubSelectionForm() {
                                 : "border-b border-slate-300",
                             )}
                           >
-                            <span
-                              className={item.showDomainName ? "font-semibold" : "text-[#6b7280]"}
-                            >
+                            <span className={item.showDomainName ? "font-semibold" : "text-[#6b7280]"}>
                               {item.showDomainName ? item.domainName : ""}
                             </span>
                             <span className="flex flex-col gap-2">
@@ -610,6 +528,7 @@ export function ClubSelectionForm() {
               )}
             </div>
 
+            {/* Confirmation Dialog */}
             <Dialog
               open={confirmationDialogState !== null}
               onOpenChange={(open) => !open && setConfirmationDialogState(null)}
@@ -617,20 +536,14 @@ export function ClubSelectionForm() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>
-                    {confirmationDialogState === "confirm"
-                      ? "Confirm Submission"
-                      : "Action Required"}
+                    {confirmationDialogState === "confirm" ? "Confirm Submission" : "Action Required"}
                   </DialogTitle>
                   <DialogDescription>
                     {confirmationDialogState === "confirm"
                       ? "No changes can be done once submitted. Are you sure you want to submit?"
-                      : hasSectionMismatch
-                        ? "Section should be same. Please make sure all students belong to the same section before submitting."
-                        : hasDuplicate
-                          ? "Duplicate Scholar IDs found. Please enter unique IDs for each student."
-                          : !hasAtLeastOneStudent
-                            ? "Please enter at least one Scholar ID before submitting."
-                            : `Please select a topic before submitting.`}
+                      : !isStudentFilled
+                        ? "Please fill in all student details (Scholar No., Name, Father's Name, Grade, Section) before submitting."
+                        : "Please select a topic before submitting."}
                   </DialogDescription>
                   {submitError && (
                     <div className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
@@ -665,13 +578,13 @@ export function ClubSelectionForm() {
               </DialogContent>
             </Dialog>
 
+            {/* Max Dialog */}
             <Dialog open={maxDialogOpen} onOpenChange={setMaxDialogOpen}>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Maximum reached</DialogTitle>
                   <DialogDescription>
-                    You have reached the maximum of 1 Topic selections. Remove one selection to add
-                    another.
+                    You have reached the maximum of 1 Topic selection. Remove one to add another.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>

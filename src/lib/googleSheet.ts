@@ -1,6 +1,8 @@
 export type SheetRegistrationData = {
-  regNo: string;
-  course: string;
+  scholarNo: string;
+  studentName: string;
+  fatherName: string;
+  grade: string;
   section: string;
   clubs: string;
 };
@@ -19,8 +21,10 @@ export async function submitRegistrationToGoogleSheet(data: SheetRegistrationDat
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
-      regNo: data.regNo,
-      course: data.course,
+      scholarNo: data.scholarNo,
+      studentName: data.studentName,
+      fatherName: data.fatherName,
+      grade: data.grade,
       section: data.section,
       clubs: data.clubs,
     }).toString(),
