@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { domains, type Domain, type Club } from "@/lib/clubData";
 import { submitRegistrationToGoogleSheet } from "@/lib/googleSheet";
+import { loginAndGetToken, fetchStudentDetails } from "@/lib/server-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,8 +14,9 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, School } from "lucide-react";
+import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, School, Search, Loader2 } from "lucide-react";
 import schoolLogo from "@/assets/school-logo.jpeg";
+import { toast } from "sonner";
 
 // ── Student form state ─────────────────────────────────────────────────────────
 interface StudentInfo {
@@ -33,10 +35,11 @@ const emptyStudent = (): StudentInfo => ({
   section: "",
 });
 
-export function ClubSelectionForm() {
+export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
   const [student, setStudent] = useState<StudentInfo>(emptyStudent());
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
   const [selectedClubs, setSelectedClubs] = useState<Club[]>([]);
+  const [isFetchingStudent, setIsFetchingStudent] = useState(false);
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [maxDialogOpen, setMaxDialogOpen] = useState(false);
@@ -77,6 +80,54 @@ export function ClubSelectionForm() {
     setSelectedDomain(domain);
     setPreviewOpen(false);
   };
+
+  const handleFetchStudent = async (specificRegNo?: string) => {
+    const regToFetch = specificRegNo || student.scholarNo;
+    if (!regToFetch.trim()) {
+      toast.error("Please enter a Scholar No.");
+      return;
+    }
+
+    setIsFetchingStudent(true);
+    try {
+      // Ensure the field is updated to reflect what we are fetching
+      setStudent(prev => ({ ...prev, scholarNo: regToFetch }));
+
+      const result = await fetchStudentDetails(regToFetch);
+      console.log("Student Data Response:", result);
+      
+      if (result.success && result.data) {
+        const s = result.data.data || result.data;
+        
+        if (s && (s.name || s.studentName)) {
+          setStudent(prev => ({
+            ...prev,
+            studentName: s.name || s.studentName || prev.studentName,
+            fatherName: s.fatherName || prev.fatherName,
+            grade: s.grade || s.class || prev.grade,
+            section: s.section || prev.section,
+          }));
+          toast.success("Student details loaded successfully!");
+        } else {
+          // If student not found or unauthorized, we still keep the regNo in the field
+          toast.error("Could not find student details (Unauthorized or Not Found).");
+        }
+      } else {
+        toast.error("Student fetch failed (API Error).");
+      }
+    } catch (error) {
+      console.error("Fetch error:", error);
+      toast.error("Failed to connect to student database.");
+    } finally {
+      setIsFetchingStudent(false);
+    }
+  };
+
+  useEffect(() => {
+    if (initialRegNo) {
+      handleFetchStudent(initialRegNo);
+    }
+  }, [initialRegNo]);
 
   const handleSubmit = () => {
     if (!isStudentFilled) {
@@ -240,7 +291,7 @@ export function ClubSelectionForm() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Scholar No */}
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 relative">
               <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
                 Scholar No.
               </label>
@@ -250,8 +301,21 @@ export function ClubSelectionForm() {
                 value={student.scholarNo}
                 onChange={(e) => handleFieldChange("scholarNo", e.target.value)}
                 placeholder="e.g. 1231/2014"
-                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d] pr-10"
               />
+              <button
+                type="button"
+                onClick={() => handleFetchStudent()}
+                disabled={isFetchingStudent}
+                className="absolute right-2 top-[30px] p-1.5 rounded-md text-[#1b3a2d] hover:bg-slate-100 transition-colors disabled:opacity-50"
+                title="Fetch student details"
+              >
+                {isFetchingStudent ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+              </button>
             </div>
 
             {/* Student Name */}
