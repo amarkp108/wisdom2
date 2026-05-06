@@ -124,10 +124,10 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
 
       const result = await fetchStudentDetails(regToFetch);
       console.log("Student Data Response:", result);
-      
+
       if (result.success && result.data) {
         const s = result.data.data || result.data;
-        
+
         if (s && (s.name || s.studentName)) {
           setStudent(prev => ({
             ...prev,
@@ -444,53 +444,53 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
               <p className="text-xs text-[#9ca3af]">Please fill in your Grade field above</p>
             </div>
           ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {domains.map((domain) => {
-              const selectedCount = selectedCountForDomain(domain);
-              const isLocked = unlockedDomainId !== null && domain.id !== unlockedDomainId;
-              return (
-                <button
-                  key={domain.id}
-                  onClick={() => handleDomainSelect(domain)}
-                  disabled={isLocked}
-                  className={cn(
-                    "rounded-xl border-2 px-4 py-3 text-left transition-all text-sm font-medium",
-                    isLocked
-                      ? "border-[#e5e7eb] bg-[#f3f4f6] text-[#9ca3af] cursor-not-allowed opacity-50"
-                      : selectedDomain?.id === domain.id
-                        ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
-                        : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]",
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span>{domain.name}</span>
-                    {isLocked ? (
-                      <Lock className="h-3.5 w-3.5 text-[#9ca3af]" />
-                    ) : (
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                          selectedCount > 0
-                            ? "bg-white text-[#1b3a2d]"
-                            : selectedDomain?.id === domain.id ? "bg-white/20 text-white" : "bg-[#e5e7eb] text-[#6b7280]",
-                        )}
-                      >
-                        {selectedCount}/{domain.maxSelections}
-                      </span>
-                    )}
-                  </div>
-                  <span
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {domains.map((domain) => {
+                const selectedCount = selectedCountForDomain(domain);
+                const isLocked = unlockedDomainId !== null && domain.id !== unlockedDomainId;
+                return (
+                  <button
+                    key={domain.id}
+                    onClick={() => handleDomainSelect(domain)}
+                    disabled={isLocked}
                     className={cn(
-                      "block text-xs mt-1 font-normal",
-                      isLocked ? "text-[#9ca3af]" : selectedDomain?.id === domain.id ? "text-white/70" : "text-[#9ca3af]",
+                      "rounded-xl border-2 px-4 py-3 text-left transition-all text-sm font-medium",
+                      isLocked
+                        ? "border-[#e5e7eb] bg-[#f3f4f6] text-[#9ca3af] cursor-not-allowed opacity-50"
+                        : selectedDomain?.id === domain.id
+                          ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
+                          : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]",
                     )}
                   >
-                    {isLocked ? "🔒 Locked" : `${domain.clubs.length} Topics · max ${domain.maxSelections}`}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{domain.name}</span>
+                      {isLocked ? (
+                        <Lock className="h-3.5 w-3.5 text-[#9ca3af]" />
+                      ) : (
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                            selectedCount > 0
+                              ? "bg-white text-[#1b3a2d]"
+                              : selectedDomain?.id === domain.id ? "bg-white/20 text-white" : "bg-[#e5e7eb] text-[#6b7280]",
+                          )}
+                        >
+                          {selectedCount}/{domain.maxSelections}
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className={cn(
+                        "block text-xs mt-1 font-normal",
+                        isLocked ? "text-[#9ca3af]" : selectedDomain?.id === domain.id ? "text-white/70" : "text-[#9ca3af]",
+                      )}
+                    >
+                      {isLocked ? "🔒 Locked" : `${domain.clubs.length} Topics · max ${domain.maxSelections}`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
 
@@ -821,11 +821,11 @@ function Header() {
       <div className="mx-auto max-w-4xl flex flex-col items-center text-center gap-3">
         <img
           src={schoolLogo}
-          alt="Wisdom World School Logo"
+          alt="Wisdom Council"
           className="h-16 w-16 rounded-full object-cover"
         />
         <div>
-          <h1 className="text-3xl font-bold text-white">Wisdom World School - Kurukshetra</h1>
+          <h1 className="text-3xl font-bold text-white">Wisdom Council</h1>
         </div>
         <p className="text-xs text-white">Developed by Okie Dokie</p>
       </div>
