@@ -599,12 +599,21 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                                                 );
                                                 return;
                                               }
-                                              const newClub: Club = { ...subClub, parentName: club.name };
-                                              if (isMaxReached) {
+                                              
+                                              const hasExistingTopic = selectedClubs.some(
+                                                (s) => !s.isDesignation && s.parentName === club.name
+                                              );
+                                              
+                                              if (!hasExistingTopic && isMaxReached) {
                                                 setMaxDialogOpen(true);
                                                 return;
                                               }
-                                              setSelectedClubs((prev) => [...prev, newClub]);
+                                              
+                                              const newClub: Club = { ...subClub, parentName: club.name };
+                                              setSelectedClubs((prev) => [
+                                                ...prev.filter((s) => !(!s.isDesignation && s.parentName === club.name)),
+                                                newClub
+                                              ]);
                                             }}
                                             className={cn(
                                               "flex items-center justify-between rounded-xl border-2 p-3 text-left transition-all",
