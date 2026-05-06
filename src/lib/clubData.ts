@@ -1,41 +1,73 @@
 export interface Club {
   name: string;
+  subClubs?: Club[];
+  parentName?: string;
+  isDesignation?: boolean;
 }
 
 export interface Domain {
   id: number;
   name: string;
   clubs: Club[];
+  maxSelections: number;
 }
 
 export const domains: Domain[] = [
   {
     id: 1,
-    name: "Economics",
+    name: "Grade 6",
+    maxSelections: 1,
     clubs: [
-      { name: "Impact of Government Campaigns on Country's PPC" },
-      { name: "Solution of Central Problems for India" },
-      { name: "Some Recent Economic Problems faced by India" },
+      { name: "Class Representative" },
     ],
   },
   {
     id: 2,
-    name: "Business Studies",
+    name: "Grade 7/8/9",
+    maxSelections: 2,
     clubs: [
-      { name: "Primary Industries in India" },
-      { name: "Secondary Industries in India" },
-      { name: "Economics Activities" },
+      { name: "Class Representative" },
+      {
+        name: "Portfolios",
+        subClubs: [
+          { name: "Head", isDesignation: true },
+          { name: "Associate", isDesignation: true },
+          { name: "Academic" },
+          { name: "Discipline" },
+          { name: "Cultural" },
+          { name: "Assembly" },
+          { name: "Oishi (canteen)" },
+          { name: "Sports" },
+          { name: "Information and Communication Technology (ICT)" },
+          { name: "Pastoral" },
+          { name: "Fine Arts" },
+        ],
+      },
     ],
   },
   {
     id: 3,
-    name: "Accountancy",
+    name: "Grade 10/11/12",
+    maxSelections: 3,
     clubs: [
-      { name: "Accounting Terms: Assets, Liabilities, Capital, Drawing, Entity" },
+      { name: "Class Representative" },
       {
-        name: "Accounting Terms: Revenue, Expenses, Capital Expenditure, Revenue Expenditure, Business Transactions",
+        name: "Portfolios",
+        subClubs: [
+          { name: "Head", isDesignation: true },
+          { name: "Associate", isDesignation: true },
+          { name: "Academic" },
+          { name: "Discipline" },
+          { name: "Cultural" },
+          { name: "Assembly" },
+          { name: "Oishi (canteen)" },
+          { name: "Sports" },
+          { name: "Information and Communication Technology (ICT)" },
+          { name: "Pastoral" },
+          { name: "Fine Arts" },
+        ],
       },
-      { name: "Rules of Debit and Credit as per Modern and Traditional Approach" },
+      { name: "Captain" },
     ],
   },
 ];

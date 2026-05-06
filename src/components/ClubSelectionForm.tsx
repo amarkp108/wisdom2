@@ -14,7 +14,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, School, Search, Loader2 } from "lucide-react";
+import { ArrowDown, ArrowUp, BookOpen, CheckCircle2, ChevronDown, Lock, School, Search, Loader2 } from "lucide-react";
 import schoolLogo from "@/assets/school-logo.jpeg";
 import { toast } from "sonner";
 
@@ -35,10 +35,21 @@ const emptyStudent = (): StudentInfo => ({
   section: "",
 });
 
+// Grade string → domain id (1=Grade6, 2=Grade7/8/9, 3=Grade10/11/12)
+function getUnlockedDomainId(grade: string): number | null {
+  const g = grade.trim();
+  if (!g) return null;
+  if (/\b6\b|grade.?6|\bvi\b/i.test(g)) return 1;
+  if (/\b[789]\b|grade.?[789]|\bvii\b|\bviii\b|\bix\b/i.test(g)) return 2;
+  if (/\b1[012]\b|grade.?1[012]|\bxi{0,2}\b/i.test(g)) return 3;
+  return null;
+}
+
 export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
   const [student, setStudent] = useState<StudentInfo>(emptyStudent());
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
   const [selectedClubs, setSelectedClubs] = useState<Club[]>([]);
+  const [expandedClub, setExpandedClub] = useState<string | null>(null);
   const [isFetchingStudent, setIsFetchingStudent] = useState(false);
 
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -50,11 +61,12 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const maxSelections = 1;
-  const totalSelected = selectedClubs.length;
-  const isSubmitReady = totalSelected === maxSelections;
-  const selectedDomainAllowsMultiple = false;
+  const maxSelections = selectedDomain?.maxSelections ?? 1;
+  const totalSelected = selectedClubs.filter(c => !c.isDesignation).length;
+  const isSubmitReady = totalSelected >= 1;
+  const selectedDomainAllowsMultiple = maxSelections > 1;
   const isMaxReached = totalSelected >= maxSelections;
+  const unlockedDomainId = getUnlockedDomainId(student.grade);
 
   // Validation
   const isStudentFilled =
@@ -66,19 +78,36 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
 
   const handleFieldChange = (field: keyof StudentInfo, value: string) => {
     setStudent((prev) => ({ ...prev, [field]: value }));
+    if (field === "grade") {
+      const newDomainId = getUnlockedDomainId(value);
+      const newDomain = domains.find((d) => d.id === newDomainId) ?? null;
+      if (newDomain?.id !== selectedDomain?.id) {
+        setSelectedDomain(newDomain);
+        setSelectedClubs([]);
+        setExpandedClub(null);
+      }
+    }
   };
 
   const getDomainNameForClub = (club: Club) =>
-    domains.find((domain) => domain.clubs.some((dc) => dc.name === club.name))?.name ?? "";
+    domains.find((domain) =>
+      domain.clubs.some((dc) =>
+        dc.name === club.name || dc.subClubs?.some((sc) => sc.name === club.name)
+      )
+    )?.name ?? "";
 
   const handleDomainSelect = (domain: Domain) => {
     if (selectedDomain?.id === domain.id) {
       setSelectedDomain(null);
+      setSelectedClubs([]);
       setPreviewOpen(false);
+      setExpandedClub(null);
       return;
     }
     setSelectedDomain(domain);
+    setSelectedClubs([]);
     setPreviewOpen(false);
+    setExpandedClub(null);
   };
 
   const handleFetchStudent = async (specificRegNo?: string) => {
@@ -148,7 +177,11 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
     setConfirmationDialogState(null);
     setSubmitError(null);
     setSubmitting(true);
-    const selectedClubNames = selectedClubs.map((club) => club.name).join(", ");
+
+    // Format each selected club — sub-clubs show as "Portfolios → Academic"
+    const selectedClubNames = selectedClubs
+      .map((club) => (club.parentName ? `${club.parentName} → ${club.name}` : club.name))
+      .join(", ");
 
     try {
       await submitRegistrationToGoogleSheet({
@@ -172,6 +205,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
     setStudent(emptyStudent());
     setSelectedDomain(null);
     setSelectedClubs([]);
+    setExpandedClub(null);
     setPreviewOpen(false);
     setMaxDialogOpen(false);
     setSubmitted(false);
@@ -179,7 +213,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
 
   const selectedCountForDomain = (domain: Domain) =>
     selectedClubs.filter((club) =>
-      domain.clubs.some((dc) => dc.name === club.name),
+      !club.isDesignation && (domain.clubs.some((dc) => dc.name === club.name || dc.name === club.parentName))
     ).length;
 
   const moveClub = (index: number, direction: -1 | 1) => {
@@ -193,18 +227,13 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
     });
   };
 
-  const selectedClubsPreview = selectedClubs.map((club, index) => {
-    const domainName = getDomainNameForClub(club);
-    const previousDomainName = index > 0 ? getDomainNameForClub(selectedClubs[index - 1]) : "";
-    return {
-      club,
-      domainName,
-      position: index + 1,
-      showDomainName: index === 0 || domainName !== previousDomainName,
-    };
-  });
+  const selectedClubsPreview = selectedClubs.map((club, index) => ({
+    club,
+    domainName: selectedDomain?.name ?? "",
+    position: index + 1,
+    showDomainName: index === 0,
+  }));
 
-  const singleChoiceDomains = ["Economics", "Business Studies", "Accountancy"];
 
   // ── Success screen ─────────────────────────────────────────────────────────
   if (submitted) {
@@ -252,7 +281,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                         <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#e2e8f0] text-xs font-semibold text-[#1b3a2d]">
                           {item.position}
                         </span>
-                        <span>{item.club.name}</span>
+                        <span>{item.club.parentName ? `${item.club.parentName} → ${item.club.name}` : item.club.name}</span>
                       </span>
                     </div>
                   ))}
@@ -400,48 +429,69 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
             </div>
             <div>
               <h3 className="font-bold text-[#1b3a2d]">Choose Topic</h3>
-              <p className="text-xs text-[#6b7280]">Select one topic of your choice</p>
+              <p className="text-xs text-[#6b7280]">
+                {unlockedDomainId !== null
+                  ? "Your grade has been detected — select your topic below"
+                  : "Fill your Grade above to unlock topics"}
+              </p>
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+
+          {unlockedDomainId === null ? (
+            <div className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-[#e5e7eb] bg-[#f8faf9] text-center">
+              <Lock className="h-7 w-7 text-[#9ca3af]" />
+              <p className="text-sm font-medium text-[#9ca3af]">Topics locked</p>
+              <p className="text-xs text-[#9ca3af]">Please fill in your Grade field above</p>
+            </div>
+          ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {domains.map((domain) => {
               const selectedCount = selectedCountForDomain(domain);
+              const isLocked = unlockedDomainId !== null && domain.id !== unlockedDomainId;
               return (
                 <button
                   key={domain.id}
                   onClick={() => handleDomainSelect(domain)}
+                  disabled={isLocked}
                   className={cn(
                     "rounded-xl border-2 px-4 py-3 text-left transition-all text-sm font-medium",
-                    selectedDomain?.id === domain.id
-                      ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
-                      : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]",
+                    isLocked
+                      ? "border-[#e5e7eb] bg-[#f3f4f6] text-[#9ca3af] cursor-not-allowed opacity-50"
+                      : selectedDomain?.id === domain.id
+                        ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
+                        : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]",
                   )}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span>{domain.name}</span>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                        selectedCount > 0
-                          ? "bg-white text-[#1b3a2d]"
-                          : "bg-[#e5e7eb] text-[#6b7280]",
-                      )}
-                    >
-                      {selectedCount}
-                    </span>
+                    {isLocked ? (
+                      <Lock className="h-3.5 w-3.5 text-[#9ca3af]" />
+                    ) : (
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                          selectedCount > 0
+                            ? "bg-white text-[#1b3a2d]"
+                            : selectedDomain?.id === domain.id ? "bg-white/20 text-white" : "bg-[#e5e7eb] text-[#6b7280]",
+                        )}
+                      >
+                        {selectedCount}/{domain.maxSelections}
+                      </span>
+                    )}
                   </div>
                   <span
                     className={cn(
                       "block text-xs mt-1 font-normal",
-                      selectedDomain?.id === domain.id ? "text-white/70" : "text-[#9ca3af]",
+                      isLocked ? "text-[#9ca3af]" : selectedDomain?.id === domain.id ? "text-white/70" : "text-[#9ca3af]",
                     )}
                   >
-                    {domain.clubs.length} Topics
+                    {isLocked ? "🔒 Locked" : `${domain.clubs.length} Topics · max ${domain.maxSelections}`}
                   </span>
                 </button>
               );
             })}
           </div>
+          )}
         </div>
 
         {/* Club Selection */}
@@ -455,16 +505,9 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 <div className="flex-1">
                   <h3 className="font-bold text-[#1b3a2d]">Choose Topic</h3>
                   <p className="text-xs text-[#6b7280]">
-                    {singleChoiceDomains.includes(selectedDomain.name) ? (
-                      "Select any one choice"
-                    ) : (
-                      <>
-                        Select a topic from{" "}
-                        <Badge className="bg-[#1b3a2d]/10 text-[#1b3a2d] hover:bg-[#1b3a2d]/10 text-xs">
-                          {selectedDomain.name}
-                        </Badge>
-                      </>
-                    )}
+                    {maxSelections === 1
+                      ? "Select any one choice"
+                      : `Select up to ${maxSelections} topics`}
                   </p>
                 </div>
                 <div className="text-right text-xs text-[#6b7280]">
@@ -475,49 +518,154 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 </div>
               </div>
               <div className="grid gap-3">
-                {selectedDomain.clubs.map((club) => {
-                  const isSelected = selectedClubs.some((s) => s.name === club.name);
+                {(() => {
                   const domainClubNames = selectedDomain.clubs.map((dc) => dc.name);
                   const hasSameDomainSelected = selectedClubs.some((s) =>
-                    domainClubNames.includes(s.name),
+                    domainClubNames.includes(s.name) || domainClubNames.includes(s.parentName ?? "")
                   );
-                  return (
-                    <button
-                      key={club.name}
-                      onClick={() => {
-                        if (isSelected) {
-                          setSelectedClubs((prev) => prev.filter((s) => s.name !== club.name));
-                          return;
-                        }
-                        if (!selectedDomainAllowsMultiple) {
-                          if (isMaxReached && !hasSameDomainSelected) {
+                  return selectedDomain.clubs.map((club) => {
+                    if (club.subClubs && club.subClubs.length > 0) {
+                      const selectedSubClub = selectedClubs.find((s) => s.parentName === club.name);
+                      const isExpanded = expandedClub === club.name;
+                      return (
+                        <div key={club.name} className="grid gap-2">
+                          <button
+                            onClick={() => setExpandedClub(isExpanded ? null : club.name)}
+                            className={cn(
+                              "flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all",
+                              selectedSubClub
+                                ? "border-[#1b3a2d] bg-[#1b3a2d]/5 shadow-sm"
+                                : "border-[#e5e7eb] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]",
+                            )}
+                          >
+                            <span className="font-semibold text-[#1b3a2d] text-sm">{club.name}</span>
+                            <div className="flex items-center gap-2">
+                              <ChevronDown className={cn("h-4 w-4 text-[#6b7280] transition-transform duration-200", isExpanded && "rotate-180")} />
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="ml-4 flex flex-col gap-2">
+                              {(() => {
+                                const designations = club.subClubs!.filter(sc => sc.isDesignation);
+                                const topics = club.subClubs!.filter(sc => !sc.isDesignation);
+                                return (
+                                  <>
+                                    {designations.length > 0 && (
+                                      <div className="grid grid-cols-2 gap-2 mb-1">
+                                        {designations.map((subClub) => {
+                                          const isSubSelected = selectedClubs.some(
+                                            (s) => s.name === subClub.name && s.parentName === club.name
+                                          );
+                                          return (
+                                            <button
+                                              key={subClub.name}
+                                              onClick={() => {
+                                                if (isSubSelected) {
+                                                  setSelectedClubs((prev) =>
+                                                    prev.filter((s) => !(s.name === subClub.name && s.parentName === club.name))
+                                                  );
+                                                } else {
+                                                  setSelectedClubs((prev) => [
+                                                    ...prev.filter((s) => !(s.isDesignation && s.parentName === club.name)),
+                                                    { ...subClub, parentName: club.name }
+                                                  ]);
+                                                }
+                                              }}
+                                              className={cn(
+                                                "flex items-center justify-center rounded-xl border-2 p-2.5 transition-all",
+                                                isSubSelected
+                                                  ? "border-[#1b3a2d] bg-[#1b3a2d] shadow-sm"
+                                                  : "border-[#e5e7eb] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]"
+                                              )}
+                                            >
+                                              <span className={cn("font-medium text-sm", isSubSelected ? "text-white" : "text-[#1b3a2d]")}>{subClub.name}</span>
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                    <div className="grid gap-2">
+                                      {topics.map((subClub) => {
+                                        const isSubSelected = selectedClubs.some(
+                                          (s) => s.name === subClub.name && s.parentName === club.name
+                                        );
+                                        return (
+                                          <button
+                                            key={subClub.name}
+                                            onClick={() => {
+                                              if (isSubSelected) {
+                                                setSelectedClubs((prev) =>
+                                                  prev.filter((s) => !(s.name === subClub.name && s.parentName === club.name))
+                                                );
+                                                return;
+                                              }
+                                              const newClub: Club = { ...subClub, parentName: club.name };
+                                              if (isMaxReached) {
+                                                setMaxDialogOpen(true);
+                                                return;
+                                              }
+                                              setSelectedClubs((prev) => [...prev, newClub]);
+                                            }}
+                                            className={cn(
+                                              "flex items-center justify-between rounded-xl border-2 p-3 text-left transition-all",
+                                              isSubSelected
+                                                ? "border-[#1b3a2d] bg-[#1b3a2d]/5 shadow-sm"
+                                                : "border-[#e5e7eb] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]",
+                                            )}
+                                          >
+                                            <span className="font-medium text-[#1b3a2d] text-sm">{subClub.name}</span>
+                                            {isSubSelected && <CheckCircle2 className="h-5 w-5 text-[#1b3a2d] shrink-0" />}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    const isSelected = selectedClubs.some((s) => s.name === club.name);
+                    return (
+                      <button
+                        key={club.name}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedClubs((prev) => prev.filter((s) => s.name !== club.name));
+                            return;
+                          }
+                          if (isMaxReached) {
                             setMaxDialogOpen(true);
                             return;
                           }
-                          setSelectedClubs((prev) => [
-                            ...prev.filter((s) => !domainClubNames.includes(s.name)),
-                            club,
-                          ]);
-                          return;
-                        }
-                        if (isMaxReached) {
-                          setMaxDialogOpen(true);
-                          return;
-                        }
-                        setSelectedClubs((prev) => [...prev, club]);
-                      }}
-                      className={cn(
-                        "flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all",
-                        isSelected
-                          ? "border-[#1b3a2d] bg-[#1b3a2d]/5 shadow-sm"
-                          : "border-[#e5e7eb] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]",
-                      )}
-                    >
-                      <span className="font-semibold text-[#1b3a2d] text-sm">{club.name}</span>
-                      {isSelected && <CheckCircle2 className="h-5 w-5 text-[#1b3a2d] shrink-0" />}
-                    </button>
-                  );
-                })}
+                          if (selectedDomainAllowsMultiple) {
+                            // Multi-select: just add
+                            setSelectedClubs((prev) => [...prev, club]);
+                          } else {
+                            // Single-select: replace any same-domain selection
+                            setSelectedClubs((prev) => [
+                              ...prev.filter(
+                                (s) => !domainClubNames.includes(s.name) && !domainClubNames.includes(s.parentName ?? "")
+                              ),
+                              club,
+                            ]);
+                          }
+                        }}
+                        className={cn(
+                          "flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all",
+                          isSelected
+                            ? "border-[#1b3a2d] bg-[#1b3a2d]/5 shadow-sm"
+                            : "border-[#e5e7eb] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]",
+                        )}
+                      >
+                        <span className="font-semibold text-[#1b3a2d] text-sm">{club.name}</span>
+                        {isSelected && <CheckCircle2 className="h-5 w-5 text-[#1b3a2d] shrink-0" />}
+                      </button>
+                    );
+                  });
+                })()}
               </div>
               <div className="flex justify-end pt-5 gap-3 flex-wrap">
                 <Button
@@ -560,7 +708,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#e2e8f0] text-xs font-semibold text-[#1b3a2d]">
                                   {item.position}
                                 </span>
-                                <span>{item.club.name}</span>
+                                <span>{item.club.parentName ? `${item.club.parentName} → ${item.club.name}` : item.club.name}</span>
                               </div>
                               <div className="flex gap-2">
                                 <button
@@ -648,7 +796,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 <DialogHeader>
                   <DialogTitle>Maximum reached</DialogTitle>
                   <DialogDescription>
-                    You have reached the maximum of 1 Topic selection. Remove one to add another.
+                    You have reached the maximum of {maxSelections} Topic{maxSelections > 1 ? "s" : ""} selection. Remove one to add another.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
