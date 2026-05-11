@@ -2,8 +2,12 @@ export type SheetRegistrationData = {
   scholarNo: string;
   studentName: string;
   fatherName: string;
+  motherName: string;
+  mobileNumber: string;
   grade: string;
   section: string;
+  previousMember: string;
+  previousPortfolio: string;
   clubs: string;
 };
 
@@ -24,8 +28,12 @@ export async function submitRegistrationToGoogleSheet(data: SheetRegistrationDat
       scholarNo: data.scholarNo,
       studentName: data.studentName,
       fatherName: data.fatherName,
+      motherName: data.motherName,
+      mobileNumber: data.mobileNumber,
       grade: data.grade,
       section: data.section,
+      previousMember: data.previousMember,
+      previousPortfolio: data.previousPortfolio,
       clubs: data.clubs,
     }).toString(),
   });

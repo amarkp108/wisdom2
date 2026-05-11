@@ -23,6 +23,8 @@ interface StudentInfo {
   scholarNo: string;
   studentName: string;
   fatherName: string;
+  motherName: string;
+  mobileNumber: string;
   grade: string;
   section: string;
 }
@@ -31,6 +33,8 @@ const emptyStudent = (): StudentInfo => ({
   scholarNo: "",
   studentName: "",
   fatherName: "",
+  motherName: "",
+  mobileNumber: "",
   grade: "",
   section: "",
 });
@@ -61,6 +65,10 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Previous session question
+  const [previousMember, setPreviousMember] = useState<"yes" | "no" | null>(null);
+  const [previousPortfolio, setPreviousPortfolio] = useState("");
+
   const maxSelections = selectedDomain?.maxSelections ?? 1;
   const totalSelected = selectedClubs.filter(c => !c.isDesignation).length;
   const isSubmitReady = totalSelected >= 1;
@@ -73,6 +81,8 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
     student.scholarNo.trim() !== "" &&
     student.studentName.trim() !== "" &&
     student.fatherName.trim() !== "" &&
+    student.motherName.trim() !== "" &&
+    student.mobileNumber.trim() !== "" &&
     student.grade.trim() !== "" &&
     student.section.trim() !== "";
 
@@ -119,7 +129,6 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
 
     setIsFetchingStudent(true);
     try {
-      // Ensure the field is updated to reflect what we are fetching
       setStudent(prev => ({ ...prev, scholarNo: regToFetch }));
 
       const result = await fetchStudentDetails(regToFetch);
@@ -133,12 +142,13 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
             ...prev,
             studentName: s.name || s.studentName || prev.studentName,
             fatherName: s.fatherName || prev.fatherName,
+            motherName: s.motherName || prev.motherName,
+            mobileNumber: s.mobileNumber || s.mobile || prev.mobileNumber,
             grade: s.grade || s.class || prev.grade,
             section: s.section || prev.section,
           }));
           toast.success("Student details loaded successfully!");
         } else {
-          // If student not found or unauthorized, we still keep the regNo in the field
           toast.error("Could not find student details (Unauthorized or Not Found).");
         }
       } else {
@@ -164,6 +174,16 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
       setConfirmationDialogState("minimum");
       return;
     }
+    if (previousMember === null) {
+      setSubmitError("Please answer the previous session question.");
+      setConfirmationDialogState("minimum");
+      return;
+    }
+    if (previousMember === "yes" && previousPortfolio.trim() === "") {
+      setSubmitError("Please mention your previous portfolio/position.");
+      setConfirmationDialogState("minimum");
+      return;
+    }
     if (!isSubmitReady) {
       setSubmitError(null);
       setConfirmationDialogState("minimum");
@@ -178,7 +198,6 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
     setSubmitError(null);
     setSubmitting(true);
 
-    // Format each selected club — sub-clubs show as "Portfolios → Academic"
     const selectedClubNames = selectedClubs
       .map((club) => (club.parentName ? `${club.parentName} → ${club.name}` : club.name))
       .join(", ");
@@ -188,8 +207,12 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
         scholarNo: student.scholarNo,
         studentName: student.studentName,
         fatherName: student.fatherName,
+        motherName: student.motherName,
+        mobileNumber: student.mobileNumber,
         grade: student.grade,
         section: student.section,
+        previousMember: previousMember === "yes" ? "Yes" : "No",
+        previousPortfolio: previousMember === "yes" ? previousPortfolio : "",
         clubs: selectedClubNames,
       });
       setSubmitted(true);
@@ -209,6 +232,8 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
     setPreviewOpen(false);
     setMaxDialogOpen(false);
     setSubmitted(false);
+    setPreviousMember(null);
+    setPreviousPortfolio("");
   };
 
   const selectedCountForDomain = (domain: Domain) =>
@@ -377,6 +402,37 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
               />
             </div>
 
+            {/* Mother Name */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
+                Mother's Name
+              </label>
+              <input
+                type="text"
+                id="motherName"
+                value={student.motherName}
+                onChange={(e) => handleFieldChange("motherName", e.target.value)}
+                placeholder="e.g. Sunita Sharma"
+                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+              />
+            </div>
+
+            {/* Mobile Number */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
+                Mobile Number
+              </label>
+              <input
+                type="tel"
+                id="mobileNumber"
+                value={student.mobileNumber}
+                onChange={(e) => handleFieldChange("mobileNumber", e.target.value)}
+                placeholder="e.g. 9876543210"
+                maxLength={10}
+                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+              />
+            </div>
+
             {/* Grade */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
@@ -409,6 +465,65 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
           </div>
         </div>
 
+        {/* ── Previous Session Question ── */}
+        <div className="rounded-2xl bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f0f2f5]">
+              <School className="h-5 w-5 text-[#1b3a2d]" />
+            </div>
+            <div>
+              <h3 className="font-bold text-[#1b3a2d]">Previous Session</h3>
+              <p className="text-xs text-[#6b7280]">Session 2025-26</p>
+            </div>
+          </div>
+          <p className="text-sm font-medium text-[#1b3a2d] mb-4">
+            Were you a member of The Wisdom Council in the previous session (2025-26)?
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => { setPreviousMember("yes"); }}
+              className={cn(
+                "flex-1 rounded-xl border-2 py-3 text-sm font-semibold transition-all",
+                previousMember === "yes"
+                  ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
+                  : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/40 hover:bg-[#f8faf9]"
+              )}
+            >
+              ✅ Yes
+            </button>
+            <button
+              type="button"
+              onClick={() => { setPreviousMember("no"); }}
+              className={cn(
+                "flex-1 rounded-xl border-2 py-3 text-sm font-semibold transition-all",
+                previousMember === "no"
+                  ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
+                  : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/40 hover:bg-[#f8faf9]"
+              )}
+            >
+              ❌ No
+            </button>
+          </div>
+
+          {/* YES — mention previous portfolio */}
+          {previousMember === "yes" && (
+            <div className="mt-4 flex flex-col gap-1">
+              <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
+                Mention Your Portfolio / Position (2025-26)
+              </label>
+              <input
+                type="text"
+                id="previousPortfolio"
+                value={previousPortfolio}
+                onChange={(e) => setPreviousPortfolio(e.target.value)}
+                placeholder="e.g. Head Boy, Sports Captain, Cultural Secretary..."
+                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+              />
+            </div>
+          )}
+        </div>
+
         {/* Progress Bar */}
         <div className="h-1.5 rounded-full overflow-hidden bg-[#e5e7eb]">
           <div
@@ -421,81 +536,8 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
           />
         </div>
 
-        {/* Domain Selection */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f0f2f5]">
-              <BookOpen className="h-5 w-5 text-[#1b3a2d]" />
-            </div>
-            <div>
-              <h3 className="font-bold text-[#1b3a2d]">Choose Topic</h3>
-              <p className="text-xs text-[#6b7280]">
-                {unlockedDomainId !== null
-                  ? "Your grade has been detected — select your topic below"
-                  : "Fill your Grade above to unlock topics"}
-              </p>
-            </div>
-          </div>
-
-          {unlockedDomainId === null ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border-2 border-dashed border-[#e5e7eb] bg-[#f8faf9] text-center">
-              <Lock className="h-7 w-7 text-[#9ca3af]" />
-              <p className="text-sm font-medium text-[#9ca3af]">Topics locked</p>
-              <p className="text-xs text-[#9ca3af]">Please fill in your Grade field above</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {domains.map((domain) => {
-                const selectedCount = selectedCountForDomain(domain);
-                const isLocked = unlockedDomainId !== null && domain.id !== unlockedDomainId;
-                return (
-                  <button
-                    key={domain.id}
-                    onClick={() => handleDomainSelect(domain)}
-                    disabled={isLocked}
-                    className={cn(
-                      "rounded-xl border-2 px-4 py-3 text-left transition-all text-sm font-medium",
-                      isLocked
-                        ? "border-[#e5e7eb] bg-[#f3f4f6] text-[#9ca3af] cursor-not-allowed opacity-50"
-                        : selectedDomain?.id === domain.id
-                          ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
-                          : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/30 hover:bg-[#f8faf9]",
-                    )}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span>{domain.name}</span>
-                      {isLocked ? (
-                        <Lock className="h-3.5 w-3.5 text-[#9ca3af]" />
-                      ) : (
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
-                            selectedCount > 0
-                              ? "bg-white text-[#1b3a2d]"
-                              : selectedDomain?.id === domain.id ? "bg-white/20 text-white" : "bg-[#e5e7eb] text-[#6b7280]",
-                          )}
-                        >
-                          {selectedCount}/{domain.maxSelections}
-                        </span>
-                      )}
-                    </div>
-                    <span
-                      className={cn(
-                        "block text-xs mt-1 font-normal",
-                        isLocked ? "text-[#9ca3af]" : selectedDomain?.id === domain.id ? "text-white/70" : "text-[#9ca3af]",
-                      )}
-                    >
-                      {isLocked ? "🔒 Locked" : `${domain.clubs.length} Topics · max ${domain.maxSelections}`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Club Selection */}
-        {selectedDomain && (
+        {/* ── Club Selection — shown for BOTH yes and no ── */}
+        {previousMember !== null && unlockedDomainId !== null && selectedDomain && (
           <>
             <div className="rounded-2xl bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-5">
@@ -503,7 +545,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                   <School className="h-5 w-5 text-[#1b3a2d]" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-[#1b3a2d]">Choose Topic</h3>
+                  <h3 className="font-bold text-[#1b3a2d]">Choose Portfolio</h3>
                   <p className="text-xs text-[#6b7280]">
                     {maxSelections === 1
                       ? "Select any one choice"
@@ -520,9 +562,6 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
               <div className="grid gap-3">
                 {(() => {
                   const domainClubNames = selectedDomain.clubs.map((dc) => dc.name);
-                  const hasSameDomainSelected = selectedClubs.some((s) =>
-                    domainClubNames.includes(s.name) || domainClubNames.includes(s.parentName ?? "")
-                  );
                   return selectedDomain.clubs.map((club) => {
                     if (club.subClubs && club.subClubs.length > 0) {
                       const selectedSubClub = selectedClubs.find((s) => s.parentName === club.name);
@@ -599,16 +638,16 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                                                 );
                                                 return;
                                               }
-                                              
+
                                               const hasExistingTopic = selectedClubs.some(
                                                 (s) => !s.isDesignation && s.parentName === club.name
                                               );
-                                              
+
                                               if (!hasExistingTopic && isMaxReached) {
                                                 setMaxDialogOpen(true);
                                                 return;
                                               }
-                                              
+
                                               const newClub: Club = { ...subClub, parentName: club.name };
                                               setSelectedClubs((prev) => [
                                                 ...prev.filter((s) => !(!s.isDesignation && s.parentName === club.name)),
@@ -650,10 +689,8 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                             return;
                           }
                           if (selectedDomainAllowsMultiple) {
-                            // Multi-select: just add
                             setSelectedClubs((prev) => [...prev, club]);
                           } else {
-                            // Single-select: replace any same-domain selection
                             setSelectedClubs((prev) => [
                               ...prev.filter(
                                 (s) => !domainClubNames.includes(s.name) && !domainClubNames.includes(s.parentName ?? "")
@@ -763,7 +800,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                     {confirmationDialogState === "confirm"
                       ? "No changes can be done once submitted. Are you sure you want to submit?"
                       : !isStudentFilled
-                        ? "Please fill in all student details (Scholar No., Name, Father's Name, Grade, Section) before submitting."
+                        ? "Please fill in all student details (Scholar No., Name, Father's Name, Mother's Name, Mobile Number, Grade, Section) before submitting."
                         : "Please select a topic before submitting."}
                   </DialogDescription>
                   {submitError && (
@@ -834,7 +871,8 @@ function Header() {
           className="h-16 w-16 rounded-full object-cover"
         />
         <div>
-          <h1 className="text-3xl font-bold text-white">Wisdom Council</h1>
+          <h1 className="text-3xl font-bold text-white">The Wisdom Council (2026-27)</h1>
+          <p style={{ color: "white" }}>(Registration Form)</p>
         </div>
         <p className="text-xs text-white">Developed by Okie Dokie</p>
       </div>
