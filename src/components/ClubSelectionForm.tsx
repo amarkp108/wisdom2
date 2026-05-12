@@ -517,7 +517,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 id="previousPortfolio"
                 value={previousPortfolio}
                 onChange={(e) => setPreviousPortfolio(e.target.value)}
-                placeholder="e.g. Head Boy, Sports Captain, Cultural Secretary..."
+                placeholder=""
                 className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
               />
             </div>
@@ -546,11 +546,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-[#1b3a2d]">Choose Portfolio</h3>
-                  <p className="text-xs text-[#6b7280]">
-                    {maxSelections === 1
-                      ? "Select any one choice"
-                      : `Select up to ${maxSelections} topics`}
-                  </p>
+                 
                 </div>
                 <div className="text-right text-xs text-[#6b7280]">
                   <div>Total selected</div>
