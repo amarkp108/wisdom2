@@ -66,6 +66,8 @@ export const fetchStudentDetails = async (regNo: string) => {
     // Key: Authorization, Value: [Your_Token_Here]
     
     const params = new URLSearchParams({
+      id: "69f1ba00c11b580012879e36",
+      entity: "698ff0d25c7936000f751d88",
       regNo: regNo,
       session: "2026-27",
     });
