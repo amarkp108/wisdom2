@@ -322,7 +322,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
             {/* Scholar No */}
             <div className="flex flex-col gap-1 relative">
               <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
-                Scholar No.
+                Scholar No. / Reg No.
               </label>
               <input
                 type="text"

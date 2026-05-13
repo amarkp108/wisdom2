@@ -47,66 +47,28 @@ export default defineConfig({
                 return;
               }
 
-              const hardcodedEntity = "64b77babcc3c21610787b060";
-              const session = "2026-27";
+              // User-specified hardcoded values
+              const hardcodedId = "69f1ba00c11b580012879e36";
+              const hardcodedEntity = "698ff0d25c7936000f751d88";
+              const hardcodedSession = "2026-27";
 
-              console.log(`Searching for student ID by regNo: ${regNo}...`);
+              console.log(`Fetching student details for regNo: ${regNo} using hardcoded ID: ${hardcodedId}...`);
               
-              // Step 1: Find student ID by regNo
-              // We'll try both common search patterns
-              const searchParams = new URLSearchParams({
-                regNo: regNo,
-                entity: hardcodedEntity,
-                session: session,
-              });
+              const detailUrl = `https://fee2-api.odpay.in/api/view/student?id=${hardcodedId}&entity=${hardcodedEntity}&session=${hardcodedSession}&regNo=${encodeURIComponent(regNo)}`;
               
-              console.log(`Step 1: Searching for student via /list...`);
-              let searchResponse = await fetch(`https://fee2-api.odpay.in/api/view/student/list?${searchParams.toString()}`, {
+              const detailResponse = await fetch(detailUrl, {
                 method: "GET",
-                headers: { "Authorization": token, "Content-Type": "application/json" },
+                headers: { 
+                  "Authorization": token, 
+                  "Content-Type": "application/json" 
+                },
               });
-
-              let searchResult = await searchResponse.json();
               
-              // If /list didn't work, try a direct /student search or /student/search
-              if (!searchResult.data || (Array.isArray(searchResult.data) && searchResult.data.length === 0)) {
-                console.log(`Step 1b: /list empty, trying direct /student search...`);
-                searchResponse = await fetch(`https://fee2-api.odpay.in/api/view/student?${searchParams.toString()}`, {
-                  method: "GET",
-                  headers: { "Authorization": token, "Content-Type": "application/json" },
-                });
-                searchResult = await searchResponse.json();
-              }
-
-              console.log("Search Result Body:", JSON.stringify(searchResult, null, 2));
-
-              // Extract ID from different possible structures
-              let studentId = null;
-              if (Array.isArray(searchResult.data)) {
-                studentId = searchResult.data[0]?._id;
-              } else if (searchResult.data?._id) {
-                studentId = searchResult.data._id;
-              } else if (searchResult.data?.id) {
-                studentId = searchResult.data.id;
-              }
+              const detailData = await detailResponse.json();
+              console.log("Direct API Response:", JSON.stringify(detailData, null, 2));
               
-              if (studentId) {
-                console.log(`Step 2: Found Student ID: ${studentId}. Fetching full details...`);
-                const detailUrl = `https://fee2-api.odpay.in/api/view/student?id=${studentId}&entity=${hardcodedEntity}&session=${session}&regNo=${encodeURIComponent(regNo)}`;
-                
-                const detailResponse = await fetch(detailUrl, {
-                  method: "GET",
-                  headers: { "Authorization": token, "Content-Type": "application/json" },
-                });
-                
-                const detailData = await detailResponse.json();
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify(detailData));
-              } else {
-                console.log("No student ID found in search results.");
-                res.setHeader("Content-Type", "application/json");
-                res.end(JSON.stringify(searchResult));
-              }
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify(detailData));
             } catch (error) {
               console.error("Backend student fetch error:", error);
               res.statusCode = 500;

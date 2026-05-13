@@ -9,72 +9,99 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as RegNoRouteImport } from './routes/$regNo'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardRegNoRouteImport } from './routes/dashboard.$regNo'
 import { Route as DashboardSplatRouteImport } from './routes/dashboard.$'
-
-const DashboardSplatRoute = DashboardSplatRouteImport.update({
-  id: '/dashboard/$',
-  path: '/dashboard/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-
+const RegNoRoute = RegNoRouteImport.update({
+  id: '/$regNo',
+  path: '/$regNo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRegNoRoute = DashboardRegNoRouteImport.update({
+  id: '/$regNo',
+  path: '/$regNo',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSplatRoute = DashboardSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/dashboard/$': typeof DashboardSplatRoute
-  '/dashboard': typeof DashboardRoute
   '/': typeof IndexRoute
+  '/$regNo': typeof RegNoRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard/$': typeof DashboardSplatRoute
+  '/dashboard/$regNo': typeof DashboardRegNoRoute
 }
 export interface FileRoutesByTo {
-  '/dashboard/$': typeof DashboardSplatRoute
-  '/dashboard': typeof DashboardRoute
   '/': typeof IndexRoute
+  '/$regNo': typeof RegNoRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard/$': typeof DashboardSplatRoute
+  '/dashboard/$regNo': typeof DashboardRegNoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/dashboard/$': typeof DashboardSplatRoute
-  '/dashboard': typeof DashboardRoute
   '/': typeof IndexRoute
+  '/$regNo': typeof RegNoRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard/$': typeof DashboardSplatRoute
+  '/dashboard/$regNo': typeof DashboardRegNoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/dashboard/$' | '/dashboard' | '/'
+  fullPaths:
+    | '/'
+    | '/$regNo'
+    | '/dashboard'
+    | '/dashboard/$'
+    | '/dashboard/$regNo'
   fileRoutesByTo: FileRoutesByTo
-  to: '/dashboard/$' | '/dashboard' | '/'
-  id: '__root__' | '/dashboard/$' | '/dashboard' | '/'
+  to: '/' | '/$regNo' | '/dashboard' | '/dashboard/$' | '/dashboard/$regNo'
+  id:
+    | '__root__'
+    | '/'
+    | '/$regNo'
+    | '/dashboard'
+    | '/dashboard/$'
+    | '/dashboard/$regNo'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  DashboardSplatRoute: typeof DashboardSplatRoute
-  DashboardRoute: typeof DashboardRoute
   IndexRoute: typeof IndexRoute
+  RegNoRoute: typeof RegNoRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard/$': {
-      id: '/dashboard/$'
-      path: '/dashboard/$'
-      fullPath: '/dashboard/$'
-      preLoaderRoute: typeof DashboardSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$regNo': {
+      id: '/$regNo'
+      path: '/$regNo'
+      fullPath: '/$regNo'
+      preLoaderRoute: typeof RegNoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -84,21 +111,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/$regNo': {
+      id: '/dashboard/$regNo'
+      path: '/$regNo'
+      fullPath: '/dashboard/$regNo'
+      preLoaderRoute: typeof DashboardRegNoRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/$': {
+      id: '/dashboard/$'
+      path: '/$'
+      fullPath: '/dashboard/$'
+      preLoaderRoute: typeof DashboardSplatRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
 
-const rootRouteChildren: RootRouteChildren = {
+interface DashboardRouteChildren {
+  DashboardSplatRoute: typeof DashboardSplatRoute
+  DashboardRegNoRoute: typeof DashboardRegNoRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardSplatRoute: DashboardSplatRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRegNoRoute: DashboardRegNoRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
+const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RegNoRoute: RegNoRoute,
+  DashboardRoute: DashboardRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

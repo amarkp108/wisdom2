@@ -1,13 +1,23 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { loginAndGetToken } from "@/lib/server-auth";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { LayoutDashboard, UserCircle } from "lucide-react";
 import schoolLogo from "@/assets/school-logo.jpeg";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 
+type IndexSearch = {
+  regno?: string;
+};
+
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): IndexSearch => {
+    return {
+      regno: (search.regno as string) || undefined,
+    };
+  },
   component: Index,
   head: () => ({
     meta: [
@@ -20,43 +30,19 @@ export const Route = createFileRoute("/")({
 function Index() {
   const navigate = useNavigate();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [regNo, setRegNo] = useState("");
 
-  const handleGoToDashboard = async () => {
-    setIsAuthenticating(true);
-    try {
-      // Hit the hidden login API via local proxy
-      const result = await loginAndGetToken();
-      
-      if (result.success) {
-        // Store the token in session storage if needed by the dashboard
-        const token = result.data?.token || result.data?.data?.token;
-        const entityId = result.data?.entity || result.data?.data?.entity;
-        const userId = result.data?._id || result.data?.data?._id;
-        
-        console.log("Login Metadata:", { token, entityId, userId });
-        
-        if (token) {
-          sessionStorage.setItem("authToken", token);
-          if (entityId) sessionStorage.setItem("entityId", entityId);
-          if (userId) sessionStorage.setItem("userId", userId);
-          
-          toast.success(`Authenticated successfully!`);
-        } else {
-          toast.success("Authenticated (no token in response)");
-        }
-        
-        // Navigate to the dashboard
-        navigate({ to: "/dashboard" });
-      } else {
-        console.error("Login failed:", result.error);
-        toast.error(result.error || "Authentication failed. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error during authentication:", error);
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setIsAuthenticating(false);
+  const handleGoToDashboard = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
+    if (!regNo) {
+      toast.error("Please enter your Registration Number");
+      return;
     }
+
+    // Since we are at the root without a path param, 
+    // we can just navigate to the /$regNo route to handle the authentication
+    navigate({ to: "/$regNo", params: { regNo: regNo } });
   };
 
   return (
@@ -80,30 +66,38 @@ function Index() {
             Wisdom World School
           </h1>
           <p className="text-slate-500 font-medium">
-            Student Management & Club Registration Portal
+            Student Management Portal
           </p>
         </div>
 
         {/* Action Section */}
         <div className="w-full pt-4">
-          <Button
-            onClick={handleGoToDashboard}
-            disabled={isAuthenticating}
-            className="w-full h-16 text-lg font-bold rounded-2xl bg-[#1b3a2d] hover:bg-[#153024] text-white shadow-lg shadow-emerald-900/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-80 group"
-          >
-            {isAuthenticating ? (
-              <>
-                <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                Authenticating...
-              </>
-            ) : (
-              <>
-                <LayoutDashboard className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                Go to Dashboard
-              </>
-            )}
-          </Button>
-          <p className="mt-6 text-sm text-slate-400 flex items-center justify-center gap-2">
+          <form onSubmit={handleGoToDashboard} className="space-y-5 text-left">
+            <div className="space-y-2">
+              <Label htmlFor="regNo" className="text-slate-600 font-semibold ml-1">Registration Number</Label>
+              <div className="relative group">
+                <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-600 transition-colors" />
+                <Input
+                  id="regNo"
+                  type="text"
+                  placeholder="e.g. 23"
+                  value={regNo}
+                  onChange={(e) => setRegNo(e.target.value)}
+                  className="pl-12 h-14 rounded-2xl border-slate-200 bg-slate-50/50 focus:bg-white focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-lg"
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isAuthenticating}
+              className="w-full h-16 text-lg font-bold rounded-2xl bg-[#1b3a2d] hover:bg-[#153024] text-white shadow-lg shadow-emerald-900/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-80 group mt-4"
+            >
+              <LayoutDashboard className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
+              Continue to Login
+            </Button>
+          </form>
+          <p className="mt-8 text-sm text-slate-400 flex items-center justify-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Secure connection established
           </p>
