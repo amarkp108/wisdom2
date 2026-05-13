@@ -67,7 +67,7 @@ export const fetchStudentDetails = async (regNo: string) => {
     
     const params = new URLSearchParams({
       id: "69f1ba00c11b580012879e36",
-      entity: "698ff0d25c7936000f751d88",
+      entity: "64b77babcc3c21610787b060",
       regNo: regNo,
       session: "2026-27",
     });

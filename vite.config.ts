@@ -21,8 +21,8 @@ export default defineConfig({
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  mobile: "7004743156",
-                  password: "123456789",
+                  mobile: "1233445566",
+                  password: "1233445566",
                 }),
               });
 
@@ -49,7 +49,7 @@ export default defineConfig({
 
               // User-specified hardcoded values
               const hardcodedId = "69f1ba00c11b580012879e36";
-              const hardcodedEntity = "698ff0d25c7936000f751d88";
+              const hardcodedEntity = "64b77babcc3c21610787b060";
               const hardcodedSession = "2026-27";
 
               console.log(`Fetching student details for regNo: ${regNo} using hardcoded ID: ${hardcodedId}...`);

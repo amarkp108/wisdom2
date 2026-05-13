@@ -13,7 +13,7 @@ export default async function handler(req, res) {
 
     // User-specified hardcoded values
     const hardcodedId = "69f1ba00c11b580012879e36";
-    const hardcodedEntity = "698ff0d25c7936000f751d88";
+    const hardcodedEntity = "64b77babcc3c21610787b060";
     const hardcodedSession = "2026-27";
 
     console.log(`Fetching student details for regNo: ${regNo} using hardcoded ID: ${hardcodedId}...`);
