@@ -24,8 +24,8 @@ interface StudentInfo {
   studentName: string;
   fatherName: string;
   motherName: string;
-  mobileNumber: string;
-  grade: string;
+  phone: string;
+  course: string;
   section: string;
 }
 
@@ -34,14 +34,14 @@ const emptyStudent = (): StudentInfo => ({
   studentName: "",
   fatherName: "",
   motherName: "",
-  mobileNumber: "",
-  grade: "",
+  phone: "",
+  course: "",
   section: "",
 });
 
-// Grade string → domain id (1=Grade6, 2=Grade7/8/9, 3=Grade10/11/12)
-function getUnlockedDomainId(grade: string): number | null {
-  const g = grade.trim();
+// Course string → domain id (1=Grade6, 2=Grade7/8/9, 3=Grade10/11/12)
+function getUnlockedDomainId(course: string): number | null {
+  const g = course.trim();
   if (!g) return null;
   if (/\b6\b|grade.?6|\bvi\b/i.test(g)) return 1;
   if (/\b[789]\b|grade.?[789]|\bvii\b|\bviii\b|\bix\b/i.test(g)) return 2;
@@ -74,7 +74,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
   const isSubmitReady = totalSelected >= 1;
   const selectedDomainAllowsMultiple = maxSelections > 1;
   const isMaxReached = totalSelected >= maxSelections;
-  const unlockedDomainId = getUnlockedDomainId(student.grade);
+  const unlockedDomainId = getUnlockedDomainId(student.course);
 
   // Validation
   const isStudentFilled =
@@ -82,13 +82,13 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
     student.studentName.trim() !== "" &&
     student.fatherName.trim() !== "" &&
     student.motherName.trim() !== "" &&
-    student.mobileNumber.trim() !== "" &&
-    student.grade.trim() !== "" &&
+    student.phone.trim() !== "" &&
+    student.course.trim() !== "" &&
     student.section.trim() !== "";
 
   const handleFieldChange = (field: keyof StudentInfo, value: string) => {
     setStudent((prev) => ({ ...prev, [field]: value }));
-    if (field === "grade") {
+    if (field === "course") {
       const newDomainId = getUnlockedDomainId(value);
       const newDomain = domains.find((d) => d.id === newDomainId) ?? null;
       if (newDomain?.id !== selectedDomain?.id) {
@@ -143,8 +143,8 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
             studentName: s.name || s.studentName || prev.studentName,
             fatherName: s.fatherName || prev.fatherName,
             motherName: s.motherName || prev.motherName,
-            mobileNumber: s.mobileNumber || s.mobile || prev.mobileNumber,
-            grade: s.grade || s.class || prev.grade,
+            phone: s.phone || s.mobileNumber || s.mobile || prev.phone,
+            course: s.course || s.grade || s.class || prev.course,
             section: s.section || prev.section,
           }));
           toast.success("Student details loaded successfully!");
@@ -208,8 +208,8 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
         studentName: student.studentName,
         fatherName: student.fatherName,
         motherName: student.motherName,
-        mobileNumber: student.mobileNumber,
-        grade: student.grade,
+        phone: student.phone,
+        course: student.course,
         section: student.section,
         previousMember: previousMember === "yes" ? "Yes" : "No",
         previousPortfolio: previousMember === "yes" ? previousPortfolio : "",
@@ -276,7 +276,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
               <p>Scholar No: <span className="font-semibold text-[#1b3a2d]">{student.scholarNo}</span></p>
               <p>Name: <span className="font-semibold text-[#1b3a2d]">{student.studentName}</span></p>
               <p>Father's Name: <span className="font-semibold text-[#1b3a2d]">{student.fatherName}</span></p>
-              <p>Grade &amp; Section: <span className="font-semibold text-[#1b3a2d]">{student.grade} · {student.section}</span></p>
+              <p>Course &amp; Section: <span className="font-semibold text-[#1b3a2d]">{student.course} · {student.section}</span></p>
             </div>
             <div className="mt-6 rounded-xl bg-[#f8faf9] p-6 text-left text-sm max-w-md mx-auto">
               <div className="mb-4 flex items-center justify-between rounded-lg bg-[#eff1f3] px-4 py-3 text-sm font-semibold text-[#1b3a2d]">
@@ -417,33 +417,33 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
               />
             </div>
 
-            {/* Mobile Number */}
+            {/* Phone */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
-                Mobile Number
+                Phone
               </label>
               <input
                 type="tel"
-                id="mobileNumber"
-                value={student.mobileNumber}
-                onChange={(e) => handleFieldChange("mobileNumber", e.target.value)}
+                id="phone"
+                value={student.phone}
+                onChange={(e) => handleFieldChange("phone", e.target.value)}
                 placeholder="e.g. 9876543210"
                 maxLength={10}
                 className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
               />
             </div>
 
-            {/* Grade */}
+            {/* Course */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
-                Grade
+                Course
               </label>
               <input
                 type="text"
-                id="grade"
-                value={student.grade}
-                onChange={(e) => handleFieldChange("grade", e.target.value)}
-                placeholder="e.g. GRADE-11"
+                id="course"
+                value={student.course}
+                onChange={(e) => handleFieldChange("course", e.target.value)}
+                placeholder="e.g. Class 1"
                 className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
               />
             </div>

@@ -3,8 +3,8 @@ export type SheetRegistrationData = {
   studentName: string;
   fatherName: string;
   motherName: string;
-  mobileNumber: string;
-  grade: string;
+  phone: string;
+  course: string;
   section: string;
   previousMember: string;
   previousPortfolio: string;
@@ -29,8 +29,8 @@ export async function submitRegistrationToGoogleSheet(data: SheetRegistrationDat
       studentName: data.studentName,
       fatherName: data.fatherName,
       motherName: data.motherName,
-      mobileNumber: data.mobileNumber,
-      grade: data.grade,
+      phone: data.phone,
+      course: data.course,
       section: data.section,
       previousMember: data.previousMember,
       previousPortfolio: data.previousPortfolio,
