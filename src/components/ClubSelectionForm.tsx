@@ -174,12 +174,12 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
       setConfirmationDialogState("minimum");
       return;
     }
-    if (previousMember === null) {
+    if (unlockedDomainId !== 1 && previousMember === null) {
       setSubmitError("Please answer the previous session question.");
       setConfirmationDialogState("minimum");
       return;
     }
-    if (previousMember === "yes" && previousPortfolio.trim() === "") {
+    if (unlockedDomainId !== 1 && previousMember === "yes" && previousPortfolio.trim() === "") {
       setSubmitError("Please mention your previous portfolio/position.");
       setConfirmationDialogState("minimum");
       return;
@@ -466,63 +466,65 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
         </div>
 
         {/* ── Previous Session Question ── */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f0f2f5]">
-              <School className="h-5 w-5 text-[#1b3a2d]" />
+        {unlockedDomainId !== 1 && (
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f0f2f5]">
+                <School className="h-5 w-5 text-[#1b3a2d]" />
+              </div>
+              <div>
+                <h3 className="font-bold text-[#1b3a2d]">Previous Session</h3>
+                <p className="text-xs text-[#6b7280]">Session 2025-26</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-[#1b3a2d]">Previous Session</h3>
-              <p className="text-xs text-[#6b7280]">Session 2025-26</p>
+            <p className="text-sm font-medium text-[#1b3a2d] mb-4">
+              Were you a member of The Wisdom Council in the previous session (2025-26)?
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => { setPreviousMember("yes"); }}
+                className={cn(
+                  "flex-1 rounded-xl border-2 py-3 text-sm font-semibold transition-all",
+                  previousMember === "yes"
+                    ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
+                    : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/40 hover:bg-[#f8faf9]"
+                )}
+              >
+                ✅ Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => { setPreviousMember("no"); }}
+                className={cn(
+                  "flex-1 rounded-xl border-2 py-3 text-sm font-semibold transition-all",
+                  previousMember === "no"
+                    ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
+                    : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/40 hover:bg-[#f8faf9]"
+                )}
+              >
+                ❌ No
+              </button>
             </div>
-          </div>
-          <p className="text-sm font-medium text-[#1b3a2d] mb-4">
-            Were you a member of The Wisdom Council in the previous session (2025-26)?
-          </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => { setPreviousMember("yes"); }}
-              className={cn(
-                "flex-1 rounded-xl border-2 py-3 text-sm font-semibold transition-all",
-                previousMember === "yes"
-                  ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
-                  : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/40 hover:bg-[#f8faf9]"
-              )}
-            >
-              ✅ Yes
-            </button>
-            <button
-              type="button"
-              onClick={() => { setPreviousMember("no"); }}
-              className={cn(
-                "flex-1 rounded-xl border-2 py-3 text-sm font-semibold transition-all",
-                previousMember === "no"
-                  ? "border-[#1b3a2d] bg-[#1b3a2d] text-white shadow-md"
-                  : "border-[#e5e7eb] bg-white text-[#1b3a2d] hover:border-[#1b3a2d]/40 hover:bg-[#f8faf9]"
-              )}
-            >
-              ❌ No
-            </button>
-          </div>
 
-          {/* YES — mention previous portfolio */}
-          {previousMember === "yes" && (
-            <div className="mt-4 flex flex-col gap-1">
-              <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
-                Mention Your Portfolio / Position (2025-26)
-              </label>
-              <input
-                type="text"
-                id="previousPortfolio"
-                value={previousPortfolio}
-                onChange={(e) => setPreviousPortfolio(e.target.value)}
-                placeholder=""
-                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
-              />
-            </div>
-          )}
-        </div>
+            {/* YES — mention previous portfolio */}
+            {previousMember === "yes" && (
+              <div className="mt-4 flex flex-col gap-1">
+                <label className="text-xs font-semibold uppercase tracking-widest text-[#6b7280]">
+                  Mention Your Portfolio / Position (2025-26)
+                </label>
+                <input
+                  type="text"
+                  id="previousPortfolio"
+                  value={previousPortfolio}
+                  onChange={(e) => setPreviousPortfolio(e.target.value)}
+                  placeholder=""
+                  className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Progress Bar */}
         <div className="h-1.5 rounded-full overflow-hidden bg-[#e5e7eb]">
@@ -537,7 +539,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
         </div>
 
         {/* ── Club Selection — shown for BOTH yes and no ── */}
-        {previousMember !== null && unlockedDomainId !== null && selectedDomain && (
+        {(previousMember !== null || unlockedDomainId === 1) && unlockedDomainId !== null && selectedDomain && (
           <>
             <div className="rounded-2xl bg-white p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-5">
