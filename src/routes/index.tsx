@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,13 +9,13 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 
 type IndexSearch = {
-  regno?: string;
+  regNo?: string;
 };
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): IndexSearch => {
     return {
-      regno: (search.regno as string) || undefined,
+      regNo: (search.regNo as string) || (search.regno as string) || undefined,
     };
   },
   component: Index,
@@ -29,8 +29,16 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const navigate = useNavigate();
+  const { regNo: searchRegNo } = Route.useSearch();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [regNo, setRegNo] = useState("");
+
+  // Automatic redirection if regNo is provided via URL query parameter (e.g. ?regNo=80)
+  useEffect(() => {
+    if (searchRegNo) {
+      navigate({ to: "/$regNo", params: { regNo: searchRegNo } });
+    }
+  }, [searchRegNo, navigate]);
 
   const handleGoToDashboard = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -40,8 +48,7 @@ function Index() {
       return;
     }
 
-    // Since we are at the root without a path param, 
-    // we can just navigate to the /$regNo route to handle the authentication
+    // Redirect to the dynamic path route which handles background auth
     navigate({ to: "/$regNo", params: { regNo: regNo } });
   };
 
