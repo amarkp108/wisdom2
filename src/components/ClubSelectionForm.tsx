@@ -39,15 +39,32 @@ const emptyStudent = (): StudentInfo => ({
   section: "",
 });
 
-// Course string → domain id (1=Grade6, 2=Grade7/8/9, 3=Grade10/11/12)
+// Course string → domain id (1=Grade 6, 2=Grade 7/8/9, 3=Grade 10/11/12)
 function getUnlockedDomainId(course: string): number | null {
   const g = course.trim();
   if (!g) return null;
-  if (/\b6\b|grade.?6|\bvi\b/i.test(g)) return 1;
-  if (/\b[789]\b|grade.?[789]|\bvii\b|\bviii\b|\bix\b/i.test(g)) return 2;
-  if (/\b1[012]\b|grade.?1[012]|\bxi{0,2}\b/i.test(g)) return 3;
+
+  // Extract all numbers from the string
+  const numbers = g.match(/\d+/g);
+  if (numbers) {
+    for (const n of numbers) {
+      const grade = parseInt(n, 10);
+      // Priority: Check if the number falls into our grade ranges
+      if (grade === 6) return 1;
+      if (grade >= 7 && grade <= 9) return 2;
+      if (grade >= 10 && grade <= 12) return 3;
+    }
+  }
+
+  // Fallback to Roman numerals if no valid grade number was found
+  const lowerG = g.toLowerCase();
+  if (/\bvi\b/.test(lowerG)) return 1;
+  if (/\bvii\b|\bviii\b|\bix\b/.test(lowerG)) return 2;
+  if (/\bx\b|\bxi\b|\bxii\b/.test(lowerG)) return 3;
+
   return null;
 }
+
 
 export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
   const [student, setStudent] = useState<StudentInfo>(emptyStudent());
