@@ -105,15 +105,6 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
 
   const handleFieldChange = (field: keyof StudentInfo, value: string) => {
     setStudent((prev) => ({ ...prev, [field]: value }));
-    if (field === "course") {
-      const newDomainId = getUnlockedDomainId(value);
-      const newDomain = domains.find((d) => d.id === newDomainId) ?? null;
-      if (newDomain?.id !== selectedDomain?.id) {
-        setSelectedDomain(newDomain);
-        setSelectedClubs([]);
-        setExpandedClub(null);
-      }
-    }
   };
 
   const getDomainNameForClub = (club: Club) =>
@@ -195,6 +186,18 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
       handleFetchStudent(initialRegNo);
     }
   }, [initialRegNo]);
+
+  // Update domain whenever course changes (manual or autofetch)
+  useEffect(() => {
+    const newDomainId = getUnlockedDomainId(student.course);
+    const newDomain = domains.find((d) => d.id === newDomainId) ?? null;
+    
+    if (newDomain?.id !== selectedDomain?.id) {
+      setSelectedDomain(newDomain);
+      setSelectedClubs([]);
+      setExpandedClub(null);
+    }
+  }, [student.course, selectedDomain?.id]);
 
   const handleSubmit = () => {
     if (!isStudentFilled) {
