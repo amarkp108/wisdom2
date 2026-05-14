@@ -66,6 +66,36 @@ function getUnlockedDomainId(course: string): number | null {
 }
 
 
+// -- LocalStorage helpers for submission prevention --
+const SUBMITTED_SCHOLARS_KEY = "submitted_scholar_nos";
+
+const isAlreadySubmitted = (scholarNo: string): boolean => {
+  if (!scholarNo) return false;
+  try {
+    const stored = localStorage.getItem(SUBMITTED_SCHOLARS_KEY);
+    if (!stored) return false;
+    const list = JSON.parse(stored);
+    return Array.isArray(list) && list.includes(scholarNo);
+  } catch (e) {
+    return false;
+  }
+};
+
+const markAsSubmitted = (scholarNo: string) => {
+  if (!scholarNo) return;
+  try {
+    const stored = localStorage.getItem(SUBMITTED_SCHOLARS_KEY);
+    let list = stored ? JSON.parse(stored) : [];
+    if (!Array.isArray(list)) list = [];
+    if (!list.includes(scholarNo)) {
+      list.push(scholarNo);
+      localStorage.setItem(SUBMITTED_SCHOLARS_KEY, JSON.stringify(list));
+    }
+  } catch (e) {
+    console.error("Failed to save submission status", e);
+  }
+};
+
 export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
   const [student, setStudent] = useState<StudentInfo>(emptyStudent());
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
@@ -75,6 +105,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [maxDialogOpen, setMaxDialogOpen] = useState(false);
+  const [alreadyRegisteredOpen, setAlreadyRegisteredOpen] = useState(false);
   const [confirmationDialogState, setConfirmationDialogState] = useState<
     "confirm" | "minimum" | null
   >(null);
@@ -132,6 +163,12 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
     const regToFetch = specificRegNo || student.scholarNo;
     if (!regToFetch.trim()) {
       toast.error("Please enter a Scholar No.");
+      return;
+    }
+
+    if (isAlreadySubmitted(regToFetch)) {
+      setAlreadyRegisteredOpen(true);
+      toast.error("You have already submitted the form with this Scholar No.!");
       return;
     }
 
@@ -200,6 +237,11 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
   }, [student.course, selectedDomain?.id]);
 
   const handleSubmit = () => {
+    if (isAlreadySubmitted(student.scholarNo)) {
+      setAlreadyRegisteredOpen(true);
+      toast.error("You have already submitted the form with this Scholar No.!");
+      return;
+    }
     if (!isStudentFilled) {
       setSubmitError("Please fill in all student details before submitting.");
       setConfirmationDialogState("minimum");
@@ -225,6 +267,12 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
   };
 
   const handleConfirmSubmit = async () => {
+    if (isAlreadySubmitted(student.scholarNo)) {
+      setAlreadyRegisteredOpen(true);
+      toast.error("You have already submitted the form with this Scholar No.!");
+      setConfirmationDialogState(null);
+      return;
+    }
     setConfirmationDialogState(null);
     setSubmitError(null);
     setSubmitting(true);
@@ -247,6 +295,7 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
         clubs: selectedClubNames,
       });
       setSubmitted(true);
+      markAsSubmitted(student.scholarNo);
     } catch {
       setSubmitError("Submission failed. Please try again.");
       setConfirmationDialogState("confirm");
@@ -866,7 +915,6 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-
             {/* Max Dialog */}
             <Dialog open={maxDialogOpen} onOpenChange={setMaxDialogOpen}>
               <DialogContent>
@@ -880,6 +928,30 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                   <DialogClose asChild>
                     <Button className="px-6 h-11 rounded-xl bg-[#1b3a2d] hover:bg-[#153024] text-white">
                       OK
+                    </Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Already Registered Dialog */}
+            <Dialog open={alreadyRegisteredOpen} onOpenChange={setAlreadyRegisteredOpen}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader className="flex flex-col items-center text-center">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-50">
+                    <Lock className="h-8 w-8 text-amber-600" />
+                  </div>
+                  <DialogTitle className="text-xl font-bold text-[#1b3a2d]">Already Registered</DialogTitle>
+                  <DialogDescription className="mt-2 text-[#6b7280]">
+                    It looks like you have already submitted the registration form for <b>Scholar No. {student.scholarNo}</b>. 
+                    <br /><br />
+                    Duplicate submissions are not allowed from the same device.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="sm:justify-center">
+                  <DialogClose asChild>
+                    <Button className="w-full sm:w-auto px-10 h-11 rounded-xl bg-[#1b3a2d] hover:bg-[#153024] text-white">
+                      GOT IT
                     </Button>
                   </DialogClose>
                 </DialogFooter>
