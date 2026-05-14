@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { LayoutDashboard, UserCircle } from "lucide-react";
 import schoolLogo from "@/assets/school-logo.jpeg";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { ClubSelectionForm } from "@/components/ClubSelectionForm";
 
 type IndexSearch = {
   regNo?: string;
@@ -28,20 +29,25 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const navigate = useNavigate();
   const { regNo: searchRegNo } = Route.useSearch();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [regNo, setRegNo] = useState("");
+  
+  // Check for stored regno in localStorage
+  const storedRegNo = localStorage.getItem("regno");
 
-  // Automatic redirection if regNo is provided via URL query parameter or localStorage
+  // Handle URL query parameter: if ?regNo=... is present, save it and reload to follow the flow
   useEffect(() => {
-    const storedRegNo = localStorage.getItem("regno");
-    if (storedRegNo) {
-      navigate({ to: "/$regNo", params: { regNo: storedRegNo } });
-    } else if (searchRegNo) {
-      navigate({ to: "/$regNo", params: { regNo: searchRegNo } });
+    if (searchRegNo && searchRegNo !== storedRegNo) {
+      localStorage.setItem("regno", searchRegNo);
+      window.location.reload();
     }
-  }, [searchRegNo, navigate]);
+  }, [searchRegNo, storedRegNo]);
+
+  // Result: If regno exists in localStorage, render the dashboard component directly on the root path
+  if (storedRegNo) {
+    return <ClubSelectionForm initialRegNo={storedRegNo} />;
+  }
 
   const handleGoToDashboard = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

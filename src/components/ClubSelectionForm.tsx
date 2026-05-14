@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { domains, type Domain, type Club } from "@/lib/clubData";
 import { submitRegistrationToGoogleSheet } from "@/lib/googleSheet";
-import { loginAndGetToken, fetchStudentDetails } from "@/lib/server-auth";
+import { loginAndGetToken, fetchStudentDetails, loginWithCredentials } from "@/lib/server-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -130,6 +130,17 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
     setIsFetchingStudent(true);
     try {
       setStudent(prev => ({ ...prev, scholarNo: regToFetch }));
+
+      // Ensure we are authenticated before fetching details
+      let token = sessionStorage.getItem("authToken");
+      if (!token) {
+        const authResult = await loginWithCredentials("7004743156", "123456789");
+        if (!authResult.success) {
+          toast.error("Authentication failed.");
+          setIsFetchingStudent(false);
+          return;
+        }
+      }
 
       const result = await fetchStudentDetails(regToFetch);
       console.log("Student Data Response:", result);
