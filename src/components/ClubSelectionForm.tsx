@@ -234,6 +234,8 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
     setSubmitted(false);
     setPreviousMember(null);
     setPreviousPortfolio("");
+    // Clear localStorage so they can log in as a different student
+    localStorage.removeItem("regno");
   };
 
   const selectedCountForDomain = (domain: Domain) =>

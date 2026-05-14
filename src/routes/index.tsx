@@ -33,9 +33,12 @@ function Index() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [regNo, setRegNo] = useState("");
 
-  // Automatic redirection if regNo is provided via URL query parameter (e.g. ?regNo=80)
+  // Automatic redirection if regNo is provided via URL query parameter or localStorage
   useEffect(() => {
-    if (searchRegNo) {
+    const storedRegNo = localStorage.getItem("regno");
+    if (storedRegNo) {
+      navigate({ to: "/$regNo", params: { regNo: storedRegNo } });
+    } else if (searchRegNo) {
       navigate({ to: "/$regNo", params: { regNo: searchRegNo } });
     }
   }, [searchRegNo, navigate]);
@@ -48,8 +51,11 @@ function Index() {
       return;
     }
 
-    // Redirect to the dynamic path route which handles background auth
-    navigate({ to: "/$regNo", params: { regNo: regNo } });
+    // Save to localStorage as requested
+    localStorage.setItem("regno", regNo);
+    
+    // Trigger page reload as requested
+    window.location.reload();
   };
 
   return (
