@@ -463,9 +463,9 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 type="text"
                 id="studentName"
                 value={student.studentName}
-                onChange={(e) => handleFieldChange("studentName", e.target.value)}
-                placeholder="e.g. Rahul Sharma"
-                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+                readOnly
+                placeholder="Autofetched"
+                className="w-full rounded-lg border border-[#e5e7eb] bg-[#f8faf9] px-3 py-2.5 text-sm text-[#6b7280] outline-none cursor-not-allowed"
               />
             </div>
 
@@ -478,9 +478,9 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 type="text"
                 id="fatherName"
                 value={student.fatherName}
-                onChange={(e) => handleFieldChange("fatherName", e.target.value)}
-                placeholder="e.g. Suresh Sharma"
-                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+                readOnly
+                placeholder="Autofetched"
+                className="w-full rounded-lg border border-[#e5e7eb] bg-[#f8faf9] px-3 py-2.5 text-sm text-[#6b7280] outline-none cursor-not-allowed"
               />
             </div>
 
@@ -493,9 +493,9 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 type="text"
                 id="motherName"
                 value={student.motherName}
-                onChange={(e) => handleFieldChange("motherName", e.target.value)}
-                placeholder="e.g. Sunita Sharma"
-                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+                readOnly
+                placeholder="Autofetched"
+                className="w-full rounded-lg border border-[#e5e7eb] bg-[#f8faf9] px-3 py-2.5 text-sm text-[#6b7280] outline-none cursor-not-allowed"
               />
             </div>
 
@@ -508,10 +508,9 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 type="tel"
                 id="phone"
                 value={student.phone}
-                onChange={(e) => handleFieldChange("phone", e.target.value)}
-                placeholder="e.g. 9876543210"
-                maxLength={10}
-                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+                readOnly
+                placeholder="Autofetched"
+                className="w-full rounded-lg border border-[#e5e7eb] bg-[#f8faf9] px-3 py-2.5 text-sm text-[#6b7280] outline-none cursor-not-allowed"
               />
             </div>
 
@@ -524,9 +523,9 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 type="text"
                 id="course"
                 value={student.course}
-                onChange={(e) => handleFieldChange("course", e.target.value)}
-                placeholder="e.g. Class 1"
-                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+                readOnly
+                placeholder="Autofetched"
+                className="w-full rounded-lg border border-[#e5e7eb] bg-[#f8faf9] px-3 py-2.5 text-sm text-[#6b7280] outline-none cursor-not-allowed"
               />
             </div>
 
@@ -539,9 +538,9 @@ export function ClubSelectionForm({ initialRegNo }: { initialRegNo?: string }) {
                 type="text"
                 id="section"
                 value={student.section}
-                onChange={(e) => handleFieldChange("section", e.target.value)}
-                placeholder="e.g. KAUTILYA"
-                className="w-full rounded-lg border border-[#e5e7eb] px-3 py-2.5 text-sm text-[#1b3a2d] outline-none transition-colors focus:border-[#1b3a2d]"
+                readOnly
+                placeholder="Autofetched"
+                className="w-full rounded-lg border border-[#e5e7eb] bg-[#f8faf9] px-3 py-2.5 text-sm text-[#6b7280] outline-none cursor-not-allowed"
               />
             </div>
           </div>
